@@ -1,0 +1,99 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>coconutz | we glitch hard</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: black;
+  color: #0ff;
+  font-family: monospace;
+  overflow-x: hidden;
+}
+nav {
+  position: sticky;
+  top: 0;
+  background: #000;
+  z-index: 9999;
+  padding: 10px;
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  border-bottom: 2px solid #0ff;
+}
+nav button {
+  background: black;
+  color: #0ff;
+  border: 1px solid #0ff;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+nav button:hover {
+  background: #0ff;
+  color: black;
+  text-shadow: 0 0 5px #0ff;
+}
+.section {
+  height: 100vh;
+  padding: 40px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  border-bottom: 1px solid #0ff;
+}
+h1 {
+  font-size: 3em;
+  animation: glitch 1s infinite;
+}
+@keyframes glitch {
+  0% { text-shadow: 2px 2px red; }
+  25% { text-shadow: -2px -2px lime; }
+  50% { text-shadow: 2px -2px cyan; }
+  75% { text-shadow: -2px 2px magenta; }
+  100% { text-shadow: 2px 2px red; }
+}
+a.download-link {
+  display: block;
+  margin-top: 20px;
+  color: #ff0;
+  font-size: 18px;
+}
+</style>
+<script>
+function teleport(sectionId) {
+  document.getElementById('screen-glitch').style.display = 'block'
+  setTimeout(() => {
+    document.getElementById('screen-glitch').style.display = 'none'
+    document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' })
+  }, 1500)
+}
+</script>
+</head>
+<body>
+<div id="screen-glitch" style="display:none;position:fixed;z-index:99999;width:100%;height:100%;background:url('https://media.tenor.com/JI1UYY2NRdIAAAAC/tv-static.gif') center center / cover no-repeat;"></div>
+<nav>
+  <button onclick="teleport('home')">Home</button>
+  <button onclick="teleport('contact')">Contact Us</button>
+  <button onclick="teleport('hire')">Hire Us</button>
+</nav>
+<div id="home" class="section">
+  <h1>Welcome to Coconutz</h1>
+  <p>we create fan-games, chaotic roblox experiences, websites that scream at your browser, and more</p>
+  <p>our team is composed of actual bananas with keyboards, we build with passion, bugs, and fire</p>
+</div>
+<div id="contact" class="section">
+  <h1>contact us</h1>
+  <p>support@coconutz.site — yeah that's our official support email now</p>
+  <p>reach out for bugs, collabs, memes, or to challenge us in Gorilla Tag</p>
+</div>
+<div id="hire" class="section">
+  <h1>hire us</h1>
+  <p>we do websites, roblox games, terminal uis that beep, and VR madness</p>
+  <p>you need chaos? we bring it</p>
+</div>
+<a class="download-link" href="#">(not real) download our pitch deck</a>
+</body>
+</html>
