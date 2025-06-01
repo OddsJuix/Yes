@@ -1,121 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Coconutz creates chaotic fan-games, Roblox experiences, glitchy websites, and VR madness with unmatched creativity and energy.">
-<meta name="keywords" content="Coconutz, Fan Games, Roblox Development, VR Games, Website Development, Glitchy Websites, OddsJuix, Gorilla Tag, Creative Coding">
-<meta name="author" content="Coconutz Team, OddsJuix">
-<meta property="og:title" content="Coconutz | We Glitch Hard">
-<meta property="og:description" content="Chaotic fan-games, Roblox madness, and glitchy websites built by a team fueled by bananas and keyboards.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://coconutz.site">
-<meta property="og:image" content="https://yourwebsite.com/path-to-image.png">
-<meta name="theme-color" content="#00ffe0">
-<title>Coconutz | We Glitch Hard</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Coconutz X PayWal - Search</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:#0a0a0a;color:#00ffe0;font-family:'Courier New',Courier,monospace;overflow-x:hidden}
-nav{position:sticky;top:0;background:#0a0a0a;z-index:1000;padding:20px;display:flex;flex-wrap:wrap;gap:15px;justify-content:center;border-bottom:2px solid #00ffe0;box-shadow:0 2px 10px rgba(0,255,255,0.2)}
-nav button{background:transparent;color:#00ffe0;border:2px solid #00ffe0;padding:10px 18px;cursor:pointer;font-size:16px;font-weight:600;letter-spacing:1px;transition:all 0.3s ease;border-radius:5px}
-nav button:hover{background:#00ffe0;color:#0a0a0a;box-shadow:0 0 10px #00ffe0}
-.section{min-height:100vh;padding:80px 20px 40px;border-bottom:1px solid #00ffe0;animation:fadeIn 1s ease}
-h1{font-size:3rem;margin-bottom:20px;animation:glitch 1.5s infinite alternate}
-h2{font-size:2.5rem;margin:30px 0}
-h3{font-size:2rem;margin:20px 0}
-p{font-size:1.2rem;line-height:1.6;margin:15px 0}
-a{color:#00ffe0;text-decoration:none}
-a:hover{text-decoration:underline}
-#screen-glitch{display:none;position:fixed;z-index:9999;width:100%;height:100%;background:url('https://media.tenor.com/JI1UYY2NRdIAAAAC/tv-static.gif') center center/cover no-repeat;opacity:0.7}
-footer{background:#0a0a0a;text-align:center;padding:20px;font-size:14px;color:#00ffe0;border-top:1px solid #00ffe0}
-.team-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;margin-top:40px}
-.card{background:#111;padding:20px;border:1px solid #00ffe0;border-radius:10px;text-align:center;transition:transform 0.3s ease,box-shadow 0.3s ease}
-.card:hover{transform:translateY(-10px);box-shadow:0 0 20px #00ffe0}
-.faq-grid{margin-top:40px}
-.faq-item{margin-bottom:30px}
-@keyframes glitch{0%{text-shadow:2px 2px red,-2px -2px blue}20%{text-shadow:-2px 2px lime,2px -2px magenta}40%{text-shadow:2px -2px cyan,-2px 2px yellow}60%{text-shadow:-2px -2px purple,2px 2px green}80%{text-shadow:2px 2px red,-2px -2px blue}100%{text-shadow:-2px 2px lime,2px -2px magenta}}
-@keyframes fadeIn{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+  body { font-family: Arial, sans-serif; max-width: 600px; margin: 30px auto; }
+  input[type=text] { width: 80%; padding: 10px; font-size: 16px; }
+  button { padding: 10px 15px; font-size: 16px; cursor: pointer; }
+  #result { margin-top: 20px; white-space: pre-wrap; background: #f0f0f0; padding: 15px; border-radius: 5px; }
 </style>
-<script>
-function teleport(sectionId){const glitch=document.getElementById('screen-glitch');glitch.style.display='block';setTimeout(()=>{glitch.style.display='none';document.getElementById(sectionId).scrollIntoView({behavior:'smooth'})},1000)}
-</script>
 </head>
 <body>
-<div id="screen-glitch"></div>
-<nav>
-<button onclick="teleport('home')">Home</button>
-<button onclick="teleport('services')">Services</button>
-<button onclick="teleport('team')">Team</button>
-<button onclick="teleport('testimonials')">Testimonials</button>
-<button onclick="teleport('faq')">FAQ</button>
-<button onclick="teleport('contact')">Contact</button>
-<button onclick="teleport('oddsjuix')">OddsJuix</button>
-</nav>
-<div id="home" class="section">
-<h1>Welcome to Coconutz</h1>
-<p>We create chaotic fan-games, Roblox experiences, and glitchy websites that break all the normal rules but look cool doing it.</p>
-<p>Fueled by bananas, keyboards, and more bugs than an ant farm.</p>
-<p>We do passion. We do chaos. We do it right.</p>
-</div>
-<div id="services" class="section">
-<h1>Our Services</h1>
-<h2>Game Development</h2>
-<p>Fan-games, VR worlds, Roblox chaos, if it's crazy, we build it.</p>
-<h2>Website Development</h2>
-<p>From glitchy masterpieces to high-speed portals, we craft sites that stun and roar.</p>
-<h2>VR Experiences</h2>
-<p>We bend reality and glitch the matrix. For real.</p>
-</div>
-<div id="team" class="section">
-<h1>Meet the Team</h1>
-<div class="team-grid">
-<div class="card"><h3>OddsJuix</h3><p>Founder, CCO (Chief Chaos Officer)</p><p>YouTuber, Visionary, King of Bugs.</p></div>
-<div class="card"><h3>Moxxie</h3><p>QA Tester</p><p>If there's a bug, she will find it. And love it.</p></div>
-<div class="card"><h3>Unknown</h3><p>???</p><p>Looking for <strong>team members</strong></p></div>
-</div>
-</div>
-<div id="testimonials" class="section">
-<h1>Testimonials</h1>
-<p>"Coconutz built us a game so chaotic it crashed our server. 10/10." - Anonymous Client</p>
-<p>"They made my website scream at users. Exactly what I asked for." - Happy Customer</p>
-<p>"Would let them glitch reality again." - VR World Owner</p>
-  <p>"Love this so much I no-clipped into the backrooms." Definitely Real Person </p>
-</div>
-<div id="faq" class="section">
-<h1>FAQ</h1>
-<div class="faq-grid">
-<div class="faq-item">
-<h3>Can you build a normal website?</h3>
-<p>Yes. But why would you want that?</p>
-</div>
-<div class="faq-item">
-<h3>What games do you work on?</h3>
-<p>Mostly fan-games, Roblox, VR experiments, and indie chaos titles.</p>
-</div>
-<div class="faq-item">
-<h3>How fast can you deliver?</h3>
-<p>We work at the speed of memes. Very fast when motivated.</p>
-</div>
-<div class="faq-item">
-<h3>How do we contact you?</h3>
-<p>Simple. <strong>support@coconutz.site</strong> or teleport to the Contact section.</p>
-</div>
-</div>
-</div>
-<div id="contact" class="section">
-<h1>Contact Us</h1>
-<p>Email us for bugs, memes, collabs, or just to say you found a bigger bug than us.</p>
-<p><strong>Email:</strong> support@coconutz.site</p>
-<p><strong>Challenge us:</strong> Gorilla Tag duels are open. Good luck.</p>
-</div>
-<div id="oddsjuix" class="section">
-<h1>About OddsJuix</h1>
-<p>Founder. Chaos Lord. Owner of multiple broken keyboards.</p>
-<p>Currently not grounded anymore — ready to build madness at light speed.</p>
-<p>Follow <strong>OddsJuix</strong> on YouTube. Witness true glitch energy.</p>
-</div>
-<footer>
-© 2025 Coconutz | Powered by Bananas, Bugs, and Bad Decisions™
-</footer>
+
+<h1>Coconutz X PayWal</h1>
+<p>Search card number or username:</p>
+<input type="text" id="searchInput" placeholder="Enter card number or username" />
+<button onclick="search()">Search</button>
+
+<div id="result"></div>
+
+<script>
+const cards = [
+  {
+    cardNumber: "9712-1011",
+    expiration: "09/27",
+    securityCode: "341",
+    rarity: "None",
+    balanceBlobium: 0,
+    user: "none"
+  },
+  {
+    cardNumber: "1071-9182",
+    expiration: "12/28",
+    securityCode: "271",
+    rarity: "None",
+    balanceBlobium: 0,
+    user: "none"
+  },
+  {
+    cardNumber: "1102-8042",
+    expiration: "11/27",
+    securityCode: "129",
+    rarity: "None",
+    balanceBlobium: 0,
+    user: "none"
+  }
+]
+
+function search() {
+  const q = document.getElementById("searchInput").value.trim().toLowerCase()
+  const resultDiv = document.getElementById("result")
+  if (!q) {
+    resultDiv.textContent = "Please enter a card number or username."
+    return
+  }
+
+  const found = cards.find(c =>
+    c.cardNumber.toLowerCase() === q ||
+    (c.user && c.user.toLowerCase() === q)
+  )
+
+  if (!found) {
+    resultDiv.textContent = "No matching card or user found."
+    return
+  }
+
+  const balanceCash = found.balanceBlobium * 2
+
+  resultDiv.textContent = `
+Card Number: ${found.cardNumber}
+Expiration: ${found.expiration}
+Security Code: ${found.securityCode}
+Rarity: ${found.rarity}
+Balance (Blobium): ${found.balanceBlobium}
+Balance (Cash): ${balanceCash}
+User: ${found.user || "Unassigned"}
+  `
+}
+</script>
+
 </body>
 </html>
