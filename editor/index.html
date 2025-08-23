@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CocoNutz Editor — Demo</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <script>
+    // ======= USER LIST (EDIT HERE) =======
+    const USERS = [
+      { username: 'OddsJuix', password: 'Starwars2380!' },
+      { username: 'guest', password: 'guest123' }
+    ];
+    // =====================================
+  </script>
+
+  <div class="wrap">
+    <!-- LOGIN SCREEN -->
+    <section id="loginScreen" class="panel center">
+      <div class="brand">
+        <div>
+          <h1>Coconutz Editor</h1>
+          <p class="muted">Simple demo editor — client-side login</p>
+        </div>
+      </div>
+
+      <form id="loginForm" class="card">
+        <label>
+          <span>Username</span>
+          <input id="username" autocomplete="username" required>
+        </label>
+        <label>
+          <span>Password</span>
+          <input id="password" type="password" autocomplete="current-password" required>
+        </label>
+        <div class="row">
+          <button type="submit" class="btn primary">Sign in</button>
+          <button type="button" id="demoFill" class="btn ghost">Fill demo</button>
+        </div>
+        <p id="loginError" class="error" aria-live="polite"></p>
+        <p class="hint">Sign up for an account on our discord! (On our main page)</p>
+      </form>
+
+      <footer class="small muted">This is a demo UI — not for production authentication.</footer>
+    </section>
+
+    <!-- EDITOR SCREEN -->
+    <section id="editorScreen" class="hidden">
+      <header class="editor-header">
+        <div class="left">
+          <div class="brand small">
+            <div><strong>Coconutz Editor</strong></div>
+          </div>
+          <div class="project-title" id="projectTitle">Untitled Project</div>
+        </div>
+
+        <div class="right">
+          <span id="loggedInUser" class="muted"></span>
+          <button id="logoutBtn" class="btn ghost">Log out</button>
+        </div>
+      </header>
+
+      <main class="editor-main">
+        <aside class="panel tools">
+          <h3>Tools</h3>
+          <div class="tool-row">
+            <button id="btnAddClip" class="btn">Add Clip</button>
+            <button id="btnRemoveAll" class="btn ghost">Clear</button>
+          </div>
+
+          <h4>Project</h4>
+          <div class="tool-row">
+            <button id="btnSave" class="btn primary">Save Project</button>
+            <input id="fileInput" type="file" accept=".json" class="file-input">
+            <button id="btnLoad" class="btn">Import</button>
+          </div>
+
+          <h4>Preview</h4>
+          <div class="tool-row">
+            <button id="btnPlay" class="btn primary">Play</button>
+            <button id="btnStop" class="btn ghost">Stop</button>
+          </div>
+
+          <div class="muted small" style="margin-top:12px">
+            Tip: Add clips, set duration, click Play to see a mock preview. This simulates a simple editor timeline.
+          </div>
+        </aside>
+
+        <section class="panel workspace">
+          <div class="preview panel-inner">
+            <div id="previewArea" class="preview-area">
+              <div id="previewLabel" class="preview-label">Preview: nothing to play</div>
+            </div>
+          </div>
+
+          <div class="timeline panel-inner">
+            <div class="timeline-header">
+              <h4>Timeline</h4>
+              <div class="muted">Clips: <span id="clipCount">0</span></div>
+            </div>
+
+            <div id="timeline" class="timeline-track" aria-live="polite"></div>
+          </div>
+        </section>
+
+        <aside class="panel details">
+          <h3>Clip Details</h3>
+          <div id="clipDetails" class="small muted">Select a clip to edit</div>
+          <div id="detailsForm" class="hidden">
+            <label>
+              <span>Clip name</span>
+              <input id="detailName">
+            </label>
+            <label>
+              <span>Duration (seconds)</span>
+              <input id="detailDuration" type="number" min="0.1" step="0.1">
+            </label>
+            <div class="row">
+              <button id="saveDetail" class="btn primary">Save</button>
+              <button id="deleteClip" class="btn ghost">Delete Clip</button>
+            </div>
+          </div>
+        </aside>
+      </main>
+
+      <footer class="panel footer">
+        <div class="muted">CocoNutz Editor — demo UI. Not a full video processing engine.</div>
+      </footer>
+    </section>
+  </div>
+
+  <script>
+    // ----- Inline JS for the login and editor demo -----
+    (function () {
+      // Get DOM nodes
+      const loginScreen = document.getElementById('loginScreen');
+      const editorScreen = document.getElementById('editorScreen');
+      const loginForm = document.getElementById('loginForm');
+      const usernameInput = document.getElementById('username');
+      const passwordInput = document.getElementById('password');
+      const loginError = document.getElementById('loginError');
+      const demoFill = document.getElementById('demoFill');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const loggedInUser = document.getElementById('loggedInUser');
+
+      // Editor elements
+      const timelineEl = document.getElementById('timeline');
+      const clipCountEl = document.getElementById('clipCount');
+      const previewLabel = document.getElementById('previewLabel');
+      const btnAddClip = document.getElementById('btnAddClip');
+      const btnRemoveAll = document.getElementById('btnRemoveAll');
+      const btnPlay = document.getElementById('btnPlay');
+      const btnStop = document.getElementById('btnStop');
+      const btnSave = document.getElementById('btnSave');
+      const btnLoad = document.getElementById('btnLoad');
+      const fileInput = document.getElementById('fileInput');
+
+      const clipDetails = document.getElementById('clipDetails');
+      const detailsForm = document.getElementById('detailsForm');
+      const detailName = document.getElementById('detailName');
+      const detailDuration = document.getElementById('detailDuration');
+      const saveDetail = document.getElementById('saveDetail');
+      const deleteClipBtn = document.getElementById('deleteClip');
+
+      let currentUser = null;
+      let clips = []; // { id, name, duration, color }
+      let selectedClipId = null;
+      let playing = false;
+      let playTimeouts = [];
+
+      // Helper: find user in USERS array
+      function validateLogin(u, p) {
+        return USERS.find(acc => acc.username === u && acc.password === p) || null;
+      }
+
+      // Show editor after login
+      function showEditorFor(user) {
+        currentUser = user;
+        loggedInUser.textContent = 'Signed in as ' + user.username;
+        loginScreen.classList.add('hidden');
+        editorScreen.classList.remove('hidden');
+        // reset demo project
+        clips = [];
+        selectedClipId = null;
+        renderTimeline();
+        previewLabel.textContent = 'Preview: nothing to play';
+      }
+
+      // Logout
+      logoutBtn.addEventListener('click', function () {
+        currentUser = null;
+        loginScreen.classList.remove('hidden');
+        editorScreen.classList.add('hidden');
+        usernameInput.value = '';
+        passwordInput.value = '';
+      });
+
+    
+      demoFill.addEventListener('click', function () {
+        usernameInput.value = USERS[0]?.username || '';
+        passwordInput.value = USERS[0]?.password || '';
+      });
+
+      // Handle login submit
+      loginForm.addEventListener('submit', function (ev) {
+        ev.preventDefault();
+        const u = usernameInput.value.trim();
+        const p = passwordInput.value;
+        const user = validateLogin(u, p);
+        if (!user) {
+          loginError.textContent = 'Invalid username or password';
+          setTimeout(() => loginError.textContent = '', 3000);
+          return;
+        }
+        loginError.textContent = '';
+        showEditorFor(user);
+      });
+
+      // Clip utilities
+      function uid() { return 'c' + Math.random().toString(36).slice(2, 9); }
+      function randColor() {
+        const palette = ['#E07A5F','#F2CC8F','#8DB596','#3B2F2F','#9AC1B9','#C77DFF'];
+        return palette[Math.floor(Math.random() * palette.length)];
+      }
+
+      function addClip(name = 'Clip', duration = 2) {
+        const clip = { id: uid(), name: name, duration: Math.max(0.1, Number(duration) || 2), color: randColor() };
+        clips.push(clip);
+        renderTimeline();
+      }
+
+      function removeClip(id) {
+        clips = clips.filter(c => c.id !== id);
+        if (selectedClipId === id) selectedClipId = null;
+        renderTimeline();
+      }
+
+      function clearAllClips() {
+        clips = [];
+        selectedClipId = null;
+        renderTimeline();
+      }
+
+      // Render timeline
+      function renderTimeline() {
+        timelineEl.innerHTML = '';
+        clipCountEl.textContent = clips.length;
+        if (clips.length === 0) {
+          timelineEl.innerHTML = '<div class="muted small">No clips. Use "Add Clip" to start.</div>';
+          clipDetails.textContent = 'Select a clip to edit';
+          detailsForm.classList.add('hidden');
+          return;
+        }
+
+        clips.forEach((clip, idx) => {
+          const el = document.createElement('div');
+          el.className = 'clip';
+          if (selectedClipId === clip.id) el.classList.add('selected');
+          el.style.background = clip.color;
+          el.setAttribute('data-id', clip.id);
+          el.innerHTML = `
+            <div class="clip-inner">
+              <div class="clip-title">${escapeHtml(clip.name)}</div>
+              <div class="clip-meta">${clip.duration.toFixed(1)}s</div>
+            </div>
+            <div class="clip-controls">
+              <button class="small-btn move-left" title="Move left">◀</button>
+              <button class="small-btn move-right" title="Move right">▶</button>
+              <button class="small-btn delete" title="Delete">✕</button>
+            </div>
+          `;
+          // Click to select
+          el.addEventListener('click', function (e) {
+            // avoid clicks from small control buttons triggering selection twice
+            if (e.target.closest('.small-btn')) return;
+            selectedClipId = clip.id;
+            renderTimeline();
+            showDetailsFor(clip);
+          });
+          // Controls
+          el.querySelector('.delete').addEventListener('click', function (ev) {
+            ev.stopPropagation();
+            removeClip(clip.id);
+          });
+          el.querySelector('.move-left').addEventListener('click', function (ev) {
+            ev.stopPropagation();
+            if (idx <= 0) return;
+            [clips[idx-1], clips[idx]] = [clips[idx], clips[idx-1]];
+            renderTimeline();
+          });
+          el.querySelector('.move-right').addEventListener('click', function (ev) {
+            ev.stopPropagation();
+            if (idx >= clips.length - 1) return;
+            [clips[idx+1], clips[idx]] = [clips[idx], clips[idx+1]];
+            renderTimeline();
+          });
+
+          timelineEl.appendChild(el);
+        });
+
+        // If a clip is selected, ensure details are shown
+        if (selectedClipId) {
+          const clip = clips.find(c => c.id === selectedClipId);
+          if (clip) showDetailsFor(clip);
+          else { selectedClipId = null; clipDetails.textContent = 'Select a clip to edit'; detailsForm.classList.add('hidden'); }
+        } else {
+          clipDetails.textContent = 'Select a clip to edit';
+          detailsForm.classList.add('hidden');
+        }
+      }
+
+      // Show details for selected clip
+      function showDetailsFor(clip) {
+        clipDetails.textContent = '';
+        detailsForm.classList.remove('hidden');
+        detailName.value = clip.name;
+        detailDuration.value = clip.duration;
+      }
+
+      // Save detail edits
+      saveDetail.addEventListener('click', function () {
+        if (!selectedClipId) return;
+        const clip = clips.find(c => c.id === selectedClipId);
+        if (!clip) return;
+        clip.name = detailName.value.trim() || clip.name;
+        clip.duration = Math.max(0.1, Number(detailDuration.value) || clip.duration);
+        renderTimeline();
+      });
+
+      // Delete selected clip via details panel
+      deleteClipBtn.addEventListener('click', function () {
+        if (!selectedClipId) return;
+        removeClip(selectedClipId);
+      });
+
+      // Add clip button
+      btnAddClip.addEventListener('click', function () {
+        const name = prompt('Clip name', 'New clip');
+        if (name === null) return;
+        const dur = prompt('Duration in seconds (e.g. 2.5)', '2');
+        if (dur === null) return;
+        addClip(name, Number(dur) || 2);
+      });
+
+      // Clear all
+      btnRemoveAll.addEventListener('click', function () {
+        if (confirm('Remove all clips from timeline?')) clearAllClips();
+      });
+
+      // Play preview: sequentially show clip label for duration*500ms (scaled)
+      function stopPlayback() {
+        playing = false;
+        playTimeouts.forEach(t => clearTimeout(t));
+        playTimeouts = [];
+        previewLabel.textContent = 'Preview: stopped';
+      }
+
+      btnStop.addEventListener('click', stopPlayback);
+
+      btnPlay.addEventListener('click', function () {
+        if (clips.length === 0) {
+          previewLabel.textContent = 'Preview: no clips to play';
+          return;
+        }
+        if (playing) {
+          // already playing: restart
+          stopPlayback();
+        }
+        playing = true;
+        previewLabel.textContent = 'Playing...';
+        let offset = 0;
+        clips.forEach((clip, i) => {
+          const displayTime = Math.max(200, Math.round(clip.duration * 600)); // scale to ms
+          const t = setTimeout(() => {
+            previewLabel.textContent = `Playing: ${clip.name} — ${clip.duration.toFixed(1)}s`;
+            // highlight the clip in timeline
+            selectedClipId = clip.id;
+            renderTimeline();
+            if (i === clips.length - 1) {
+              // at end schedule stop
+              setTimeout(() => {
+                previewLabel.textContent = 'Preview: finished';
+                playing = false;
+                selectedClipId = null;
+                renderTimeline();
+              }, displayTime);
+            }
+          }, offset);
+          playTimeouts.push(t);
+          offset += displayTime;
+        });
+      });
+
+      // Save project as JSON download
+      btnSave.addEventListener('click', function () {
+        const project = {
+          title: document.getElementById('projectTitle').textContent,
+          clips: clips
+        };
+        const blob = new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = (project.title || 'project') + '.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      });
+
+      // Load project: show file picker
+      btnLoad.addEventListener('click', function () {
+        fileInput.value = '';
+        fileInput.click();
+      });
+
+      fileInput.addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+          try {
+            const data = JSON.parse(ev.target.result);
+            if (!Array.isArray(data.clips)) throw new Error('Invalid project file');
+            clips = data.clips.map(c => ({ id: c.id || uid(), name: c.name || 'Clip', duration: Number(c.duration) || 2, color: c.color || randColor() }));
+            document.getElementById('projectTitle').textContent = data.title || 'Imported Project';
+            selectedClipId = null;
+            renderTimeline();
+            previewLabel.textContent = 'Project imported';
+          } catch (err) {
+            alert('Failed to import project: ' + err.message);
+          }
+        };
+        reader.readAsText(file);
+      });
+
+      // Utility escape
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, function (m) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]; });
+      }
+
+      // Keyboard: Enter login
+      usernameInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') passwordInput.focus(); });
+      passwordInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') loginForm.requestSubmit(); });
+
+    })();
+  </script>
+</body>
+</html>
