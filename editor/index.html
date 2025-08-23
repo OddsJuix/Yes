@@ -1,453 +1,1248 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-     <link rel="icon" href="gtag-jkwkz.png">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Coconutz Editor — Demo</title>
-  <link rel="stylesheet" href="OddsJuix/Yes/editor/styles.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CapCut Pro - Video Editor</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <script>
-    // ======= USER LIST (EDIT HERE) =======
-    const USERS = [
-      { username: 'OddsJuix', password: 'Starwars2380!' },
-      { username: 'guest', password: 'guest123' }
-    ];
-    // =====================================
-  </script>
-
-  <div class="wrap">
-    <!-- LOGIN SCREEN -->
-    <section id="loginScreen" class="panel center">
-      <div class="brand">
-        <div>
-          <h1>Coconutz Editor</h1>
-          <p class="muted">Simple demo editor — client-side login</p>
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-container">
+        <div class="login-box">
+            <div class="logo">
+                <h1>CapCut Pro</h1>
+                <p>Professional Video Editor</p>
+            </div>
+            
+            <form class="login-form" onsubmit="return login(event)">
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <button type="submit" class="login-btn">Sign In</button>
+                
+                <div class="login-options">
+                    <a href="#" onclick="showUserManager()">Manage Users</a>
+                    <a href="#" onclick="showCredentials()">Show Credentials</a>
+                </div>
+            </form>
+            
+            <div class="demo-credentials">
+                <h3>Demo Accounts:</h3>
+                <p><strong>admin</strong> / password123</p>
+                <p><strong>editor</strong> / edit2024</p>
+                <p><strong>user</strong> / user123</p>
+            </div>
         </div>
-      </div>
-
-      <form id="loginForm" class="card">
-        <label>
-          <span>Username</span>
-          <input id="username" autocomplete="username" required>
-        </label>
-        <label>
-          <span>Password</span>
-          <input id="password" type="password" autocomplete="current-password" required>
-        </label>
-        <div class="row">
-          <button type="submit" class="btn primary">Sign in</button>
-          <button type="button" id="demoFill" class="btn ghost">Fill demo</button>
+        
+        <!-- User Management Panel -->
+        <div id="user-manager" class="user-manager hidden">
+            <div class="manager-box">
+                <h2>User Management</h2>
+                <div class="user-list">
+                    <div class="user-item">
+                        <input type="text" value="admin" class="username-edit">
+                        <input type="text" value="password123" class="password-edit">
+                        <button onclick="deleteUser(this)">Delete</button>
+                    </div>
+                    <div class="user-item">
+                        <input type="text" value="editor" class="username-edit">
+                        <input type="text" value="edit2024" class="password-edit">
+                        <button onclick="deleteUser(this)">Delete</button>
+                    </div>
+                    <div class="user-item">
+                        <input type="text" value="user" class="username-edit">
+                        <input type="text" value="user123" class="password-edit">
+                        <button onclick="deleteUser(this)">Delete</button>
+                    </div>
+                </div>
+                <div class="add-user">
+                    <input type="text" placeholder="New Username" id="new-username">
+                    <input type="text" placeholder="New Password" id="new-password">
+                    <button onclick="addUser()">Add User</button>
+                </div>
+                <button onclick="closeUserManager()" class="close-btn">Close</button>
+            </div>
         </div>
-        <p id="loginError" class="error" aria-live="polite"></p>
-        <p class="hint">Sign up for an account on our discord! (On our main page)</p>
-      </form>
+    </div>
 
-      <footer class="small muted">This is a demo UI — not for production authentication.</footer>
-    </section>
+    <!-- Main Editor Interface -->
+    <div id="editor-screen" class="editor-container hidden">
+        <!-- Top Navigation Bar -->
+        <nav class="top-nav">
+            <div class="nav-left">
+                <div class="logo-small">CapCut Pro</div>
+                <div class="nav-menu">
+                    <button class="nav-item active">Edit</button>
+                    <button class="nav-item">Audio</button>
+                    <button class="nav-item">Text</button>
+                    <button class="nav-item">Effects</button>
+                    <button class="nav-item">Transitions</button>
+                    <button class="nav-item">Filters</button>
+                    <button class="nav-item">Export</button>
+                </div>
+            </div>
+            <div class="nav-right">
+                <button class="nav-btn">Save Project</button>
+                <button class="nav-btn">Share</button>
+                <div class="user-profile">
+                    <span id="current-user">admin</span>
+                    <button onclick="logout()" class="logout-btn">Logout</button>
+                </div>
+            </div>
+        </nav>
 
-    <!-- EDITOR SCREEN -->
-    <section id="editorScreen" class="hidden">
-      <header class="editor-header">
-        <div class="left">
-          <div class="brand small">
-            <div><strong>Coconutz Editor</strong></div>
-          </div>
-          <div class="project-title" id="projectTitle">Untitled Project</div>
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <!-- Left Sidebar - Media Library -->
+            <div class="left-sidebar">
+                <div class="sidebar-header">
+                    <h3>Media Library</h3>
+                    <button class="import-btn">Import</button>
+                </div>
+                
+                <div class="media-tabs">
+                    <button class="tab-btn active">Videos</button>
+                    <button class="tab-btn">Images</button>
+                    <button class="tab-btn">Audio</button>
+                    <button class="tab-btn">Templates</button>
+                </div>
+                
+                <div class="media-grid">
+                    <div class="media-item video">
+                        <div class="media-thumbnail">
+                            <div class="play-icon">▶</div>
+                            <span class="duration">2:34</span>
+                        </div>
+                        <p class="media-name">Sample Video 1.mp4</p>
+                    </div>
+                    
+                    <div class="media-item video">
+                        <div class="media-thumbnail">
+                            <div class="play-icon">▶</div>
+                            <span class="duration">1:45</span>
+                        </div>
+                        <p class="media-name">Intro Clip.mp4</p>
+                    </div>
+                    
+                    <div class="media-item image">
+                        <div class="media-thumbnail">
+                            <div class="image-icon">🖼</div>
+                        </div>
+                        <p class="media-name">Background.jpg</p>
+                    </div>
+                    
+                    <div class="media-item audio">
+                        <div class="media-thumbnail">
+                            <div class="audio-icon">🎵</div>
+                            <span class="duration">3:22</span>
+                        </div>
+                        <p class="media-name">Music Track.mp3</p>
+                    </div>
+                    
+                    <div class="media-item video">
+                        <div class="media-thumbnail">
+                            <div class="play-icon">▶</div>
+                            <span class="duration">0:58</span>
+                        </div>
+                        <p class="media-name">Transition.mp4</p>
+                    </div>
+                    
+                    <div class="media-item image">
+                        <div class="media-thumbnail">
+                            <div class="image-icon">🖼</div>
+                        </div>
+                        <p class="media-name">Logo.png</p>
+                    </div>
+                    
+                    <div class="media-item video">
+                        <div class="media-thumbnail">
+                            <div class="play-icon">▶</div>
+                            <span class="duration">4:12</span>
+                        </div>
+                        <p class="media-name">Main Content.mp4</p>
+                    </div>
+                    
+                    <div class="media-item audio">
+                        <div class="media-thumbnail">
+                            <div class="audio-icon">🎵</div>
+                            <span class="duration">2:15</span>
+                        </div>
+                        <p class="media-name">Sound Effect.wav</p>
+                    </div>
+                </div>
+                
+                <div class="media-search">
+                    <input type="text" placeholder="Search media..." class="search-input">
+                    <div class="filter-options">
+                        <select class="filter-select">
+                            <option>All Types</option>
+                            <option>Videos</option>
+                            <option>Images</option>
+                            <option>Audio</option>
+                        </select>
+                        <select class="sort-select">
+                            <option>Date Added</option>
+                            <option>Name</option>
+                            <option>Duration</option>
+                            <option>Size</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Area - Preview and Timeline -->
+            <div class="center-area">
+                <!-- Video Preview -->
+                <div class="preview-section">
+                    <div class="preview-header">
+                        <div class="preview-controls">
+                            <button class="control-btn">⏮</button>
+                            <button class="control-btn play-pause">▶</button>
+                            <button class="control-btn">⏭</button>
+                            <span class="time-display">00:00 / 02:34</span>
+                        </div>
+                        <div class="preview-options">
+                            <button class="option-btn">Fit</button>
+                            <button class="option-btn">Fill</button>
+                            <button class="option-btn">100%</button>
+                            <button class="option-btn">Fullscreen</button>
+                        </div>
+                    </div>
+                    
+                    <div class="preview-canvas">
+                        <div class="canvas-container">
+                            <div class="video-preview">
+                                <div class="preview-placeholder">
+                                    <div class="placeholder-content">
+                                        <h2>Video Preview</h2>
+                                        <p>1920 x 1080</p>
+                                        <div class="preview-frame">
+                                            <div class="frame-content">
+                                                <div class="sample-video-frame">
+                                                    <div class="frame-overlay">
+                                                        <div class="text-overlay">Sample Text</div>
+                                                        <div class="logo-overlay">LOGO</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Canvas Tools -->
+                            <div class="canvas-tools">
+                                <div class="tool-group">
+                                    <button class="tool-btn active">Select</button>
+                                    <button class="tool-btn">Crop</button>
+                                    <button class="tool-btn">Text</button>
+                                    <button class="tool-btn">Shape</button>
+                                </div>
+                                <div class="zoom-controls">
+                                    <button class="zoom-btn">-</button>
+                                    <span class="zoom-level">100%</span>
+                                    <button class="zoom-btn">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline Section -->
+                <div class="timeline-section">
+                    <div class="timeline-header">
+                        <div class="timeline-controls">
+                            <button class="timeline-btn">Add Track</button>
+                            <button class="timeline-btn">Split</button>
+                            <button class="timeline-btn">Delete</button>
+                            <button class="timeline-btn">Copy</button>
+                            <button class="timeline-btn">Paste</button>
+                        </div>
+                        <div class="timeline-zoom">
+                            <button class="zoom-btn">-</button>
+                            <div class="zoom-slider">
+                                <input type="range" min="1" max="100" value="50" class="slider">
+                            </div>
+                            <button class="zoom-btn">+</button>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-container">
+                        <div class="timeline-ruler">
+                            <div class="ruler-marks">
+                                <div class="mark">0:00</div>
+                                <div class="mark">0:10</div>
+                                <div class="mark">0:20</div>
+                                <div class="mark">0:30</div>
+                                <div class="mark">0:40</div>
+                                <div class="mark">0:50</div>
+                                <div class="mark">1:00</div>
+                                <div class="mark">1:10</div>
+                                <div class="mark">1:20</div>
+                                <div class="mark">1:30</div>
+                                <div class="mark">1:40</div>
+                                <div class="mark">1:50</div>
+                                <div class="mark">2:00</div>
+                                <div class="mark">2:10</div>
+                                <div class="mark">2:20</div>
+                                <div class="mark">2:30</div>
+                            </div>
+                            <div class="playhead"></div>
+                        </div>
+                        
+                        <div class="timeline-tracks">
+                            <!-- Video Track 1 -->
+                            <div class="track video-track">
+                                <div class="track-header">
+                                    <div class="track-controls">
+                                        <button class="track-toggle">👁</button>
+                                        <button class="track-lock">🔒</button>
+                                        <span class="track-name">Video 1</span>
+                                    </div>
+                                </div>
+                                <div class="track-content">
+                                    <div class="clip video-clip" style="left: 0%; width: 25%;">
+                                        <div class="clip-content">
+                                            <span class="clip-name">Intro.mp4</span>
+                                            <div class="clip-handles">
+                                                <div class="handle left"></div>
+                                                <div class="handle right"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="clip video-clip" style="left: 30%; width: 35%;">
+                                        <div class="clip-content">
+                                            <span class="clip-name">Main Content.mp4</span>
+                                            <div class="clip-handles">
+                                                <div class="handle left"></div>
+                                                <div class="handle right"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="clip video-clip" style="left: 70%; width: 20%;">
+                                        <div class="clip-content">
+                                            <span class="clip-name">Outro.mp4</span>
+                                            <div class="clip-handles">
+                                                <div class="handle left"></div>
+                                                <div class="handle right"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Video Track 2 -->
+                            <div class="track video-track">
+                                <div class="track-header">
+                                    <div class="track-controls">
+                                        <button class="track-toggle">👁</button>
+                                        <button class="track-lock">🔓</button>
+                                        <span class="track-name">Video 2</span>
+                                    </div>
+                                </div>
+                                <div class="track-content">
+                                    <div class="clip video-clip overlay" style="left: 15%; width: 15%;">
+                                        <div class="clip-content">
+                                            <span class="clip-name">Logo.png</span>
+                                            <div class="clip-handles">
+                                                <div class="handle left"></div>
+                                                <div class="handle right"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="clip video-clip overlay" style="left: 45%; width: 25%;">
+                                        <div class="clip-content">
+                                            <span class="clip-name">Text Overlay</span>
+                                            <div class="clip-handles">
+                                                <div class="handle left"></div>
+                                                <div class="handle right"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Audio Track 1 -->
+                            <div class="track audio-track">
+                                <div class="track-header">
+                                    <div class="track-controls">
+                                        <button class="track-toggle">🔊</button>
+                                        <button class="track-lock">🔓</button>
+                                        <span class="track-name">Audio 1</span>
+                                    </div>
+                                </div>
+                                <div class="track-content">
+                                    <div class="clip audio-clip" style="left: 0%; width: 90%;">
+                                        <div class="clip-content">
+                                            <span class="clip-name">Background Music.mp3</span>
+                                            <div class="audio-waveform">
+                                                <div class="waveform-bars">
+                                                    <div class="bar" style="height: 20%"></div>
+                                                    <div class="bar" style="height: 40%"></div>
+                                                    <div class="bar" style="height: 60%"></div>
+                                                    <div class="bar" style="height: 30%"></div>
+                                                    <div class="bar" style="height: 80%"></div>
+                                                    <div class="bar" style="height: 50%"></div>
+                                                    <div class="bar" style="height: 70%"></div>
+                                                    <div class="bar" style="height: 40%"></div>
+                                                    <div class="bar" style="height: 90%"></div>
+                                                    <div class="bar" style="height: 60%"></div>
+                                                    <div class="bar" style="height: 30%"></div>
+                                                    <div class="bar" style="height: 50%"></div>
+                                                    <div class="bar" style="height: 70%"></div>
+                                                    <div class="bar" style="height: 40%"></div>
+                                                    <div class="bar" style="height: 60%"></div>
+                                                    <div class="bar" style="height: 80%"></div>
+                                                    <div class="bar" style="height: 30%"></div>
+                                                    <div class="bar" style="height: 50%"></div>
+                                                    <div class="bar" style="height: 40%"></div>
+                                                    <div class="bar" style="height: 70%"></div>
+                                                </div>
+                                            </div>
+                                            <div class="clip-handles">
+                                                <div class="handle left"></div>
+                                                <div class="handle right"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Audio Track 2 -->
+                            <div class="track audio-track">
+                                <div class="track-header">
+                                    <div class="track-controls">
+                                        <button class="track-toggle">🔊</button>
+                                        <button class="track-lock">🔓</button>
+                                        <span class="track-name">Audio 2</span>
+                                    </div>
+                                </div>
+                                <div class="track-content">
+                                    <div class="clip audio-clip" style="left: 25%; width: 15%;">
+                                        <div class="clip-content">
+                                            <span class="clip-name">Sound Effect.wav</span>
+                                            <div class="audio-waveform">
+                                                <div class="waveform-bars">
+                                                    <div class="bar" style="height: 90%"></div>
+                                                    <div class="bar" style="height: 70%"></div>
+                                                    <div class="bar" style="height: 50%"></div>
+                                                    <div class="bar" style="height: 30%"></div>
+                                                    <div class="bar" style="height: 60%"></div>
+                                                    <div class="bar" style="height: 80%"></div>
+                                                    <div class="bar" style="height: 40%"></div>
+                                                    <div class="bar" style="height: 20%"></div>
+                                                </div>
+                                            </div>
+                                            <div class="clip-handles">
+                                                <div class="handle left"></div>
+                                                <div class="handle right"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="clip audio-clip" style="left: 60%; width: 20%;">
+                                        <div class="clip-content">
+                                            <span class="clip-name">Voiceover.mp3</span>
+                                            <div class="audio-waveform">
+                                                <div class="waveform-bars">
+                                                    <div class="bar" style="height: 40%"></div>
+                                                    <div class="bar" style="height: 60%"></div>
+                                                    <div class="bar" style="height: 80%"></div>
+                                                    <div class="bar" style="height: 50%"></div>
+                                                    <div class="bar" style="height: 70%"></div>
+                                                    <div class="bar" style="height: 30%"></div>
+                                                    <div class="bar" style="height: 90%"></div>
+                                                    <div class="bar" style="height: 60%"></div>
+                                                    <div class="bar" style="height: 40%"></div>
+                                                    <div class="bar" style="height: 50%"></div>
+                                                </div>
+                                            </div>
+                                            <div class="clip-handles">
+                                                <div class="handle left"></div>
+                                                <div class="handle right"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar - Properties Panel -->
+            <div class="right-sidebar">
+                <div class="properties-panel">
+                    <div class="panel-header">
+                        <h3>Properties</h3>
+                        <div class="panel-tabs">
+                            <button class="tab-btn active">Video</button>
+                            <button class="tab-btn">Audio</button>
+                            <button class="tab-btn">Effects</button>
+                        </div>
+                    </div>
+                    
+                    <div class="property-sections">
+                        <!-- Transform Section -->
+                        <div class="property-section">
+                            <div class="section-header">
+                                <h4>Transform</h4>
+                                <button class="collapse-btn">−</button>
+                            </div>
+                            <div class="section-content">
+                                <div class="property-row">
+                                    <label>Position X</label>
+                                    <input type="number" value="0" class="property-input">
+                                </div>
+                                <div class="property-row">
+                                    <label>Position Y</label>
+                                    <input type="number" value="0" class="property-input">
+                                </div>
+                                <div class="property-row">
+                                    <label>Scale X</label>
+                                    <input type="number" value="100" class="property-input">
+                                    <span class="unit">%</span>
+                                </div>
+                                <div class="property-row">
+                                    <label>Scale Y</label>
+                                    <input type="number" value="100" class="property-input">
+                                    <span class="unit">%</span>
+                                </div>
+                                <div class="property-row">
+                                    <label>Rotation</label>
+                                    <input type="number" value="0" class="property-input">
+                                    <span class="unit">°</span>
+                                </div>
+                                <div class="property-row">
+                                    <label>Opacity</label>
+                                    <input type="range" min="0" max="100" value="100" class="property-slider">
+                                    <span class="slider-value">100%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Color Correction Section -->
+                        <div class="property-section">
+                            <div class="section-header">
+                                <h4>Color Correction</h4>
+                                <button class="collapse-btn">−</button>
+                            </div>
+                            <div class="section-content">
+                                <div class="property-row">
+                                    <label>Brightness</label>
+                                    <input type="range" min="-100" max="100" value="0" class="property-slider">
+                                    <span class="slider-value">0</span>
+                                </div>
+                                <div class="property-row">
+                                    <label>Contrast</label>
+                                    <input type="range" min="-100" max="100" value="0" class="property-slider">
+                                    <span class="slider-value">0</span>
+                                </div>
+                                <div class="property-row">
+                                    <label>Saturation</label>
+                                    <input type="range" min="-100" max="100" value="0" class="property-slider">
+                                    <span class="slider-value">0</span>
+                                </div>
+                                <div class="property-row">
+                                    <label>Hue</label>
+                                    <input type="range" min="-180" max="180" value="0" class="property-slider">
+                                    <span class="slider-value">0°</span>
+                                </div>
+                                <div class="property-row">
+                                    <label>Temperature</label>
+                                    <input type="range" min="-100" max="100" value="0" class="property-slider">
+                                    <span class="slider-value">0</span>
+                                </div>
+                                <div class="property-row">
+                                    <label>Tint</label>
+                                    <input type="range" min="-100" max="100" value="0" class="property-slider">
+                                    <span class="slider-value">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Speed Section -->
+                        <div class="property-section">
+                            <div class="section-header">
+                                <h4>Speed</h4>
+                                <button class="collapse-btn">−</button>
+                            </div>
+                            <div class="section-content">
+                                <div class="speed-presets">
+                                    <button class="speed-btn">0.25x</button>
+                                    <button class="speed-btn">0.5x</button>
+                                    <button class="speed-btn active">1x</button>
+                                    <button class="speed-btn">2x</button>
+                                    <button class="speed-btn">4x</button>
+                                </div>
+                                <div class="property-row">
+                                    <label>Custom Speed</label>
+                                    <input type="number" value="1.0" step="0.1" class="property-input">
+                                    <span class="unit">x</span>
+                                </div>
+                                <div class="property-row">
+                                    <label>Reverse</label>
+                                    <input type="checkbox" class="property-checkbox">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Audio Section -->
+                        <div class="property-section">
+                            <div class="section-header">
+                                <h4>Audio</h4>
+                                <button class="collapse-btn">−</button>
+                            </div>
+                            <div class="section-content">
+                                <div class="property-row">
+                                    <label>Volume</label>
+                                    <input type="range" min="0" max="200" value="100" class="property-slider">
+                                    <span class="slider-value">100%</span>
+                                </div>
+                                <div class="property-row">
+                                    <label>Fade In</label>
+                                    <input type="number" value="0" class="property-input">
+                                    <span class="unit">s</span>
+                                </div>
+                                <div class="property-row">
+                                    <label>Fade Out</label>
+                                    <input type="number" value="0" class="property-input">
+                                    <span class="unit">s</span>
+                                </div>
+                                <div class="property-row">
+                                    <label>Mute</label>
+                                    <input type="checkbox" class="property-checkbox">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Effects Library -->
+                <div class="effects-panel">
+                    <div class="panel-header">
+                        <h3>Effects</h3>
+                        <div class="search-box">
+                            <input type="text" placeholder="Search effects..." class="search-input">
+                        </div>
+                    </div>
+                    
+                    <div class="effects-categories">
+                        <button class="category-btn active">All</button>
+                        <button class="category-btn">Basic</button>
+                        <button class="category-btn">Blur</button>
+                        <button class="category-btn">Color</button>
+                        <button class="category-btn">Distort</button>
+                        <button class="category-btn">Light</button>
+                    </div>
+                    
+                    <div class="effects-grid">
+                        <div class="effect-item">
+                            <div class="effect-preview">
+                                <div class="effect-icon">✨</div>
+                            </div>
+                            <p class="effect-name">Blur</p>
+                        </div>
+                        
+                        <div class="effect-item">
+                            <div class="effect-preview">
+                                <div class="effect-icon">🌈</div>
+                            </div>
+                            <p class="effect-name">Rainbow</p>
+                        </div>
+                        
+                        <div class="effect-item">
+                            <div class="effect-preview">
+                                <div class="effect-icon">⚡</div>
+                            </div>
+                            <p class="effect-name">Glow</p>
+                        </div>
+                        
+                        <div class="effect-item">
+                            <div class="effect-preview">
+                                <div class="effect-icon">🎭</div>
+                            </div>
+                            <p class="effect-name">Vintage</p>
+                        </div>
+                        
+                        <div class="effect-item">
+                            <div class="effect-preview">
+                                <div class="effect-icon">🔥</div>
+                            </div>
+                            <p class="effect-name">Fire</p>
+                        </div>
+                        
+                        <div class="effect-item">
+                            <div class="effect-preview">
+                                <div class="effect-icon">❄️</div>
+                            </div>
+                            <p class="effect-name">Freeze</p>
+                        </div>
+                        
+                        <div class="effect-item">
+                            <div class="effect-preview">
+                                <div class="effect-icon">🌟</div>
+                            </div>
+                            <p class="effect-name">Sparkle</p>
+                        </div>
+                        
+                        <div class="effect-item">
+                            <div class="effect-preview">
+                                <div class="effect-icon">🌊</div>
+                            </div>
+                            <p class="effect-name">Wave</p>
+                        </div>
+                        
+                        <div class="effect-item">
+                            <div class="effect-preview">
+                                <div class="effect-icon">🎨</div>
+                            </div>
+                            <p class="effect-name">Paint</p>
+                        </div>
+                        
+                        <div class="effect-item">
+                            <div class="effect-preview">
+                                <div class="effect-icon">💫</div>
+                            </div>
+                            <p class="effect-name">Cosmic</p>
+                        </div>
+                        
+                        <div class="effect-item">
+                            <div class="effect-preview">
+                                <div class="effect-icon">🔮</div>
+                            </div>
+                            <p class="effect-name">Crystal</p>
+                        </div>
+                        
+                        <div class="effect-item">
+                            <div class="effect-preview">
+                                <div class="effect-icon">⚙️</div>
+                            </div>
+                            <p class="effect-name">Mechanical</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Transitions Panel -->
+                <div class="transitions-panel">
+                    <div class="panel-header">
+                        <h3>Transitions</h3>
+                    </div>
+                    
+                    <div class="transitions-grid">
+                        <div class="transition-item">
+                            <div class="transition-preview">
+                                <div class="transition-demo fade"></div>
+                            </div>
+                            <p class="transition-name">Fade</p>
+                        </div>
+                        
+                        <div class="transition-item">
+                            <div class="transition-preview">
+                                <div class="transition-demo slide"></div>
+                            </div>
+                            <p class="transition-name">Slide</p>
+                        </div>
+                        
+                        <div class="transition-item">
+                            <div class="transition-preview">
+                                <div class="transition-demo zoom"></div>
+                            </div>
+                            <p class="transition-name">Zoom</p>
+                        </div>
+                        
+                        <div class="transition-item">
+                            <div class="transition-preview">
+                                <div class="transition-demo wipe"></div>
+                            </div>
+                            <p class="transition-name">Wipe</p>
+                        </div>
+                        
+                        <div class="transition-item">
+                            <div class="transition-preview">
+                                <div class="transition-demo dissolve"></div>
+                            </div>
+                            <p class="transition-name">Dissolve</p>
+                        </div>
+                        
+                        <div class="transition-item">
+                            <div class="transition-preview">
+                                <div class="transition-demo push"></div>
+                            </div>
+                            <p class="transition-name">Push</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <div class="right">
-          <span id="loggedInUser" class="muted"></span>
-          <button id="logoutBtn" class="btn ghost">Log out</button>
+        
+        <!-- Bottom Status Bar -->
+        <div class="status-bar">
+            <div class="status-left">
+                <span class="status-item">Project: Untitled Video</span>
+                <span class="status-item">Resolution: 1920x1080</span>
+                <span class="status-item">FPS: 30</span>
+                <span class="status-item">Duration: 02:34</span>
+            </div>
+            <div class="status-right">
+                <span class="status-item">CPU: 45%</span>
+                <span class="status-item">RAM: 2.1GB</span>
+                <span class="status-item">Storage: 15.2GB free</span>
+                <div class="render-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                    <span class="progress-text">Ready</span>
+                </div>
+            </div>
         </div>
-      </header>
+    </div>
 
-      <main class="editor-main">
-        <aside class="panel tools">
-          <h3>Tools</h3>
-          <div class="tool-row">
-            <button id="btnAddClip" class="btn">Add Clip</button>
-            <button id="btnRemoveAll" class="btn ghost">Clear</button>
-          </div>
+    <!-- Context Menus -->
+    <div id="context-menu" class="context-menu hidden">
+        <div class="menu-item">Cut</div>
+        <div class="menu-item">Copy</div>
+        <div class="menu-item">Paste</div>
+        <div class="menu-separator"></div>
+        <div class="menu-item">Delete</div>
+        <div class="menu-item">Duplicate</div>
+        <div class="menu-separator"></div>
+        <div class="menu-item">Properties</div>
+    </div>
 
-          <h4>Project</h4>
-          <div class="tool-row">
-            <button id="btnSave" class="btn primary">Save Project</button>
-            <input id="fileInput" type="file" accept=".json" class="file-input">
-            <button id="btnLoad" class="btn">Import</button>
-          </div>
-
-          <h4>Preview</h4>
-          <div class="tool-row">
-            <button id="btnPlay" class="btn primary">Play</button>
-            <button id="btnStop" class="btn ghost">Stop</button>
-          </div>
-
-          <div class="muted small" style="margin-top:12px">
-            Tip: Add clips, set duration, click Play to see a mock preview. This simulates a simple editor timeline.
-          </div>
-        </aside>
-
-        <section class="panel workspace">
-          <div class="preview panel-inner">
-            <div id="previewArea" class="preview-area">
-              <div id="previewLabel" class="preview-label">Preview: nothing to play</div>
+    <!-- Export Modal -->
+    <div id="export-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Export Video</h2>
+                <button class="close-modal">&times;</button>
             </div>
-          </div>
-
-          <div class="timeline panel-inner">
-            <div class="timeline-header">
-              <h4>Timeline</h4>
-              <div class="muted">Clips: <span id="clipCount">0</span></div>
+            <div class="modal-body">
+                <div class="export-settings">
+                    <div class="setting-group">
+                        <label>Format</label>
+                        <select class="export-select">
+                            <option>MP4</option>
+                            <option>MOV</option>
+                            <option>AVI</option>
+                            <option>WebM</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label>Quality</label>
+                        <select class="export-select">
+                            <option>High (1080p)</option>
+                            <option>Medium (720p)</option>
+                            <option>Low (480p)</option>
+                            <option>Custom</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label>Frame Rate</label>
+                        <select class="export-select">
+                            <option>30 FPS</option>
+                            <option>24 FPS</option>
+                            <option>60 FPS</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label>Bitrate</label>
+                        <input type="number" value="8000" class="export-input">
+                        <span>kbps</span>
+                    </div>
+                </div>
+                <div class="export-preview">
+                    <h3>Export Preview</h3>
+                    <div class="preview-stats">
+                        <p>Estimated Size: 45.2 MB</p>
+                        <p>Estimated Time: 2 minutes</p>
+                        <p>Output Resolution: 1920x1080</p>
+                    </div>
+                </div>
             </div>
-
-            <div id="timeline" class="timeline-track" aria-live="polite"></div>
-          </div>
-        </section>
-
-        <aside class="panel details">
-          <h3>Clip Details</h3>
-          <div id="clipDetails" class="small muted">Select a clip to edit</div>
-          <div id="detailsForm" class="hidden">
-            <label>
-              <span>Clip name</span>
-              <input id="detailName">
-            </label>
-            <label>
-              <span>Duration (seconds)</span>
-              <input id="detailDuration" type="number" min="0.1" step="0.1">
-            </label>
-            <div class="row">
-              <button id="saveDetail" class="btn primary">Save</button>
-              <button id="deleteClip" class="btn ghost">Delete Clip</button>
+            <div class="modal-footer">
+                <button class="btn-secondary">Cancel</button>
+                <button class="btn-primary">Start Export</button>
             </div>
-          </div>
-        </aside>
-      </main>
+        </div>
+    </div>
 
-      <footer class="panel footer">
-        <div class="muted">CocoNutz Editor — demo UI. Not a full video processing engine.</div>
-      </footer>
-    </section>
-  </div>
-
-  <script>
-    // ----- Inline JS for the login and editor demo -----
-    (function () {
-      // Get DOM nodes
-      const loginScreen = document.getElementById('loginScreen');
-      const editorScreen = document.getElementById('editorScreen');
-      const loginForm = document.getElementById('loginForm');
-      const usernameInput = document.getElementById('username');
-      const passwordInput = document.getElementById('password');
-      const loginError = document.getElementById('loginError');
-      const demoFill = document.getElementById('demoFill');
-      const logoutBtn = document.getElementById('logoutBtn');
-      const loggedInUser = document.getElementById('loggedInUser');
-
-      // Editor elements
-      const timelineEl = document.getElementById('timeline');
-      const clipCountEl = document.getElementById('clipCount');
-      const previewLabel = document.getElementById('previewLabel');
-      const btnAddClip = document.getElementById('btnAddClip');
-      const btnRemoveAll = document.getElementById('btnRemoveAll');
-      const btnPlay = document.getElementById('btnPlay');
-      const btnStop = document.getElementById('btnStop');
-      const btnSave = document.getElementById('btnSave');
-      const btnLoad = document.getElementById('btnLoad');
-      const fileInput = document.getElementById('fileInput');
-
-      const clipDetails = document.getElementById('clipDetails');
-      const detailsForm = document.getElementById('detailsForm');
-      const detailName = document.getElementById('detailName');
-      const detailDuration = document.getElementById('detailDuration');
-      const saveDetail = document.getElementById('saveDetail');
-      const deleteClipBtn = document.getElementById('deleteClip');
-
-      let currentUser = null;
-      let clips = []; // { id, name, duration, color }
-      let selectedClipId = null;
-      let playing = false;
-      let playTimeouts = [];
-
-      // Helper: find user in USERS array
-      function validateLogin(u, p) {
-        return USERS.find(acc => acc.username === u && acc.password === p) || null;
-      }
-
-      // Show editor after login
-      function showEditorFor(user) {
-        currentUser = user;
-        loggedInUser.textContent = 'Signed in as ' + user.username;
-        loginScreen.classList.add('hidden');
-        editorScreen.classList.remove('hidden');
-        // reset demo project
-        clips = [];
-        selectedClipId = null;
-        renderTimeline();
-        previewLabel.textContent = 'Preview: nothing to play';
-      }
-
-      // Logout
-      logoutBtn.addEventListener('click', function () {
-        currentUser = null;
-        loginScreen.classList.remove('hidden');
-        editorScreen.classList.add('hidden');
-        usernameInput.value = '';
-        passwordInput.value = '';
-      });
-
-    
-      demoFill.addEventListener('click', function () {
-        usernameInput.value = USERS[0]?.username || '';
-        passwordInput.value = USERS[0]?.password || '';
-      });
-
-      // Handle login submit
-      loginForm.addEventListener('submit', function (ev) {
-        ev.preventDefault();
-        const u = usernameInput.value.trim();
-        const p = passwordInput.value;
-        const user = validateLogin(u, p);
-        if (!user) {
-          loginError.textContent = 'Invalid username or password';
-          setTimeout(() => loginError.textContent = '', 3000);
-          return;
-        }
-        loginError.textContent = '';
-        showEditorFor(user);
-      });
-
-      // Clip utilities
-      function uid() { return 'c' + Math.random().toString(36).slice(2, 9); }
-      function randColor() {
-        const palette = ['#E07A5F','#F2CC8F','#8DB596','#3B2F2F','#9AC1B9','#C77DFF'];
-        return palette[Math.floor(Math.random() * palette.length)];
-      }
-
-      function addClip(name = 'Clip', duration = 2) {
-        const clip = { id: uid(), name: name, duration: Math.max(0.1, Number(duration) || 2), color: randColor() };
-        clips.push(clip);
-        renderTimeline();
-      }
-
-      function removeClip(id) {
-        clips = clips.filter(c => c.id !== id);
-        if (selectedClipId === id) selectedClipId = null;
-        renderTimeline();
-      }
-
-      function clearAllClips() {
-        clips = [];
-        selectedClipId = null;
-        renderTimeline();
-      }
-
-      // Render timeline
-      function renderTimeline() {
-        timelineEl.innerHTML = '';
-        clipCountEl.textContent = clips.length;
-        if (clips.length === 0) {
-          timelineEl.innerHTML = '<div class="muted small">No clips. Use "Add Clip" to start.</div>';
-          clipDetails.textContent = 'Select a clip to edit';
-          detailsForm.classList.add('hidden');
-          return;
-        }
-
-        clips.forEach((clip, idx) => {
-          const el = document.createElement('div');
-          el.className = 'clip';
-          if (selectedClipId === clip.id) el.classList.add('selected');
-          el.style.background = clip.color;
-          el.setAttribute('data-id', clip.id);
-          el.innerHTML = `
-            <div class="clip-inner">
-              <div class="clip-title">${escapeHtml(clip.name)}</div>
-              <div class="clip-meta">${clip.duration.toFixed(1)}s</div>
+    <!-- Keyboard Shortcuts Help -->
+    <div id="shortcuts-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Keyboard Shortcuts</h2>
+                <button class="close-modal">&times;</button>
             </div>
-            <div class="clip-controls">
-              <button class="small-btn move-left" title="Move left">◀</button>
-              <button class="small-btn move-right" title="Move right">▶</button>
-              <button class="small-btn delete" title="Delete">✕</button>
+            <div class="modal-body">
+                <div class="shortcuts-grid">
+                    <div class="shortcut-category">
+                        <h3>Playback</h3>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Space</span>
+                            <span class="shortcut-desc">Play/Pause</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">J</span>
+                            <span class="shortcut-desc">Rewind</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">K</span>
+                            <span class="shortcut-desc">Pause</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">L</span>
+                            <span class="shortcut-desc">Fast Forward</span>
+                        </div>
+                    </div>
+                    <div class="shortcut-category">
+                        <h3>Editing</h3>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Ctrl+Z</span>
+                            <span class="shortcut-desc">Undo</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Ctrl+Y</span>
+                            <span class="shortcut-desc">Redo</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Ctrl+C</span>
+                            <span class="shortcut-desc">Copy</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Ctrl+V</span>
+                            <span class="shortcut-desc">Paste</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Delete</span>
+                            <span class="shortcut-desc">Delete Selected</span>
+                        </div>
+                    </div>
+                    <div class="shortcut-category">
+                        <h3>Timeline</h3>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">+</span>
+                            <span class="shortcut-desc">Zoom In</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">-</span>
+                            <span class="shortcut-desc">Zoom Out</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Home</span>
+                            <span class="shortcut-desc">Go to Start</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">End</span>
+                            <span class="shortcut-desc">Go to End</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-          `;
-          // Click to select
-          el.addEventListener('click', function (e) {
-            // avoid clicks from small control buttons triggering selection twice
-            if (e.target.closest('.small-btn')) return;
-            selectedClipId = clip.id;
-            renderTimeline();
-            showDetailsFor(clip);
-          });
-          // Controls
-          el.querySelector('.delete').addEventListener('click', function (ev) {
-            ev.stopPropagation();
-            removeClip(clip.id);
-          });
-          el.querySelector('.move-left').addEventListener('click', function (ev) {
-            ev.stopPropagation();
-            if (idx <= 0) return;
-            [clips[idx-1], clips[idx]] = [clips[idx], clips[idx-1]];
-            renderTimeline();
-          });
-          el.querySelector('.move-right').addEventListener('click', function (ev) {
-            ev.stopPropagation();
-            if (idx >= clips.length - 1) return;
-            [clips[idx+1], clips[idx]] = [clips[idx], clips[idx+1]];
-            renderTimeline();
-          });
+        </div>
+    </div>
 
-          timelineEl.appendChild(el);
-        });
+    <script>
+        // User credentials storage
+        let users = [
+            { username: 'admin', password: 'password123' },
+            { username: 'editor', password: 'edit2024' },
+            { username: 'user', password: 'user123' }
+        ];
+        
+        let currentUser = null;
 
-        // If a clip is selected, ensure details are shown
-        if (selectedClipId) {
-          const clip = clips.find(c => c.id === selectedClipId);
-          if (clip) showDetailsFor(clip);
-          else { selectedClipId = null; clipDetails.textContent = 'Select a clip to edit'; detailsForm.classList.add('hidden'); }
-        } else {
-          clipDetails.textContent = 'Select a clip to edit';
-          detailsForm.classList.add('hidden');
-        }
-      }
-
-      // Show details for selected clip
-      function showDetailsFor(clip) {
-        clipDetails.textContent = '';
-        detailsForm.classList.remove('hidden');
-        detailName.value = clip.name;
-        detailDuration.value = clip.duration;
-      }
-
-      // Save detail edits
-      saveDetail.addEventListener('click', function () {
-        if (!selectedClipId) return;
-        const clip = clips.find(c => c.id === selectedClipId);
-        if (!clip) return;
-        clip.name = detailName.value.trim() || clip.name;
-        clip.duration = Math.max(0.1, Number(detailDuration.value) || clip.duration);
-        renderTimeline();
-      });
-
-      // Delete selected clip via details panel
-      deleteClipBtn.addEventListener('click', function () {
-        if (!selectedClipId) return;
-        removeClip(selectedClipId);
-      });
-
-      // Add clip button
-      btnAddClip.addEventListener('click', function () {
-        const name = prompt('Clip name', 'New clip');
-        if (name === null) return;
-        const dur = prompt('Duration in seconds (e.g. 2.5)', '2');
-        if (dur === null) return;
-        addClip(name, Number(dur) || 2);
-      });
-
-      // Clear all
-      btnRemoveAll.addEventListener('click', function () {
-        if (confirm('Remove all clips from timeline?')) clearAllClips();
-      });
-
-      // Play preview: sequentially show clip label for duration*500ms (scaled)
-      function stopPlayback() {
-        playing = false;
-        playTimeouts.forEach(t => clearTimeout(t));
-        playTimeouts = [];
-        previewLabel.textContent = 'Preview: stopped';
-      }
-
-      btnStop.addEventListener('click', stopPlayback);
-
-      btnPlay.addEventListener('click', function () {
-        if (clips.length === 0) {
-          previewLabel.textContent = 'Preview: no clips to play';
-          return;
-        }
-        if (playing) {
-          // already playing: restart
-          stopPlayback();
-        }
-        playing = true;
-        previewLabel.textContent = 'Playing...';
-        let offset = 0;
-        clips.forEach((clip, i) => {
-          const displayTime = Math.max(200, Math.round(clip.duration * 600)); // scale to ms
-          const t = setTimeout(() => {
-            previewLabel.textContent = `Playing: ${clip.name} — ${clip.duration.toFixed(1)}s`;
-            // highlight the clip in timeline
-            selectedClipId = clip.id;
-            renderTimeline();
-            if (i === clips.length - 1) {
-              // at end schedule stop
-              setTimeout(() => {
-                previewLabel.textContent = 'Preview: finished';
-                playing = false;
-                selectedClipId = null;
-                renderTimeline();
-              }, displayTime);
+        // Login functionality
+        function login(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            const user = users.find(u => u.username === username && u.password === password);
+            
+            if (user) {
+                currentUser = user.username;
+                document.getElementById('current-user').textContent = currentUser;
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('editor-screen').classList.remove('hidden');
+            } else {
+                alert('Invalid credentials! Please try again.');
             }
-          }, offset);
-          playTimeouts.push(t);
-          offset += displayTime;
+            
+            return false;
+        }
+
+        // Logout functionality
+        function logout() {
+            currentUser = null;
+            document.getElementById('login-screen').classList.remove('hidden');
+            document.getElementById('editor-screen').classList.add('hidden');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        // User management
+        function showUserManager() {
+            document.getElementById('user-manager').classList.remove('hidden');
+            updateUserList();
+        }
+
+        function closeUserManager() {
+            document.getElementById('user-manager').classList.add('hidden');
+        }
+
+        function updateUserList() {
+            const userList = document.querySelector('.user-list');
+            userList.innerHTML = '';
+            
+            users.forEach((user, index) => {
+                const userItem = document.createElement('div');
+                userItem.className = 'user-item';
+                userItem.innerHTML = `
+                    <input type="text" value="${user.username}" class="username-edit" onchange="updateUser(${index}, 'username', this.value)">
+                    <input type="text" value="${user.password}" class="password-edit" onchange="updateUser(${index}, 'password', this.value)">
+                    <button onclick="deleteUser(${index})">Delete</button>
+                `;
+                userList.appendChild(userItem);
+            });
+        }
+
+        function updateUser(index, field, value) {
+            users[index][field] = value;
+        }
+
+        function deleteUser(index) {
+            users.splice(index, 1);
+            updateUserList();
+        }
+
+        function addUser() {
+            const username = document.getElementById('new-username').value;
+            const password = document.getElementById('new-password').value;
+            
+            if (username && password) {
+                users.push({ username, password });
+                document.getElementById('new-username').value = '';
+                document.getElementById('new-password').value = '';
+                updateUserList();
+            }
+        }
+
+        function showCredentials() {
+            let credsList = 'Current User Accounts:\n\n';
+            users.forEach(user => {
+                credsList += `Username: ${user.username} | Password: ${user.password}\n`;
+            });
+            alert(credsList);
+        }
+
+        // Timeline and playback controls
+        let isPlaying = false;
+        let currentTime = 0;
+        let duration = 154; // 2:34 in seconds
+
+        function togglePlayback() {
+            isPlaying = !isPlaying;
+            const playBtn = document.querySelector('.play-pause');
+            playBtn.textContent = isPlaying ? '⏸' : '▶';
+            
+            if (isPlaying) {
+                startPlayback();
+            } else {
+                stopPlayback();
+            }
+        }
+
+        function startPlayback() {
+            // Simulate playback
+            const interval = setInterval(() => {
+                if (!isPlaying) {
+                    clearInterval(interval);
+                    return;
+                }
+                
+                currentTime += 0.1;
+                if (currentTime >= duration) {
+                    currentTime = duration;
+                    isPlaying = false;
+                    document.querySelector('.play-pause').textContent = '▶';
+                    clearInterval(interval);
+                }
+                
+                updateTimeDisplay();
+                updatePlayhead();
+            }, 100);
+        }
+
+        function stopPlayback() {
+            // Stop playback logic
+        }
+
+        function updateTimeDisplay() {
+            const minutes = Math.floor(currentTime / 60);
+            const seconds = Math.floor(currentTime % 60);
+            const totalMinutes = Math.floor(duration / 60);
+            const totalSeconds = Math.floor(duration % 60);
+            
+            const timeDisplay = document.querySelector('.time-display');
+            timeDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} / ${totalMinutes.toString().padStart(2, '0')}:${totalSeconds.toString().padStart(2, '0')}`;
+        }
+
+        function updatePlayhead() {
+            const playhead = document.querySelector('.playhead');
+            const percentage = (currentTime / duration) * 100;
+            playhead.style.left = `${percentage}%`;
+        }
+
+        // Initialize event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Play/pause button
+            document.querySelector('.play-pause').addEventListener('click', togglePlayback);
+            
+            // Timeline click
+            document.querySelector('.timeline-ruler').addEventListener('click', function(e) {
+                const rect = this.getBoundingClientRect();
+                const percentage = (e.clientX - rect.left) / rect.width;
+                currentTime = percentage * duration;
+                updateTimeDisplay();
+                updatePlayhead();
+            });
+            
+            // Property sliders
+            document.querySelectorAll('.property-slider').forEach(slider => {
+                slider.addEventListener('input', function() {
+                    const valueSpan = this.parentNode.querySelector('.slider-value');
+                    if (valueSpan) {
+                        let value = this.value;
+                        if (this.parentNode.querySelector('label').textContent.includes('Hue')) {
+                            value += '°';
+                        } else if (this.parentNode.querySelector('label').textContent.includes('Opacity') || 
+                                   this.parentNode.querySelector('label').textContent.includes('Volume')) {
+                            value += '%';
+                        }
+                        valueSpan.textContent = value;
+                    }
+                });
+            });
+            
+            // Tab switching
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const parent = this.closest('.media-tabs, .panel-tabs');
+                    if (parent) {
+                        parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                    }
+                });
+            });
+            
+            // Speed preset buttons
+            document.querySelectorAll('.speed-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+            
+            // Effect and transition items
+            document.querySelectorAll('.effect-item, .transition-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    this.classList.toggle('selected');
+                });
+            });
+            
+            // Media items
+            document.querySelectorAll('.media-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    document.querySelectorAll('.media-item').forEach(i => i.classList.remove('selected'));
+                    this.classList.add('selected');
+                });
+                
+                item.addEventListener('dblclick', function() {
+                    // Simulate adding to timeline
+                    alert('Media added to timeline!');
+                });
+            });
+            
+            // Track controls
+            document.querySelectorAll('.track-toggle').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (this.textContent === '👁') {
+                        this.textContent = '🙈';
+                        this.parentNode.parentNode.parentNode.style.opacity = '0.5';
+                    } else {
+                        this.textContent = '👁';
+                        this.parentNode.parentNode.parentNode.style.opacity = '1';
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.track-lock').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (this.textContent === '🔓') {
+                        this.textContent = '🔒';
+                    } else {
+                        this.textContent = '🔓';
+                    }
+                });
+            });
+            
+            // Section collapse/expand
+            document.querySelectorAll('.collapse-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const content = this.parentNode.parentNode.querySelector('.section-content');
+                    if (content.style.display === 'none') {
+                        content.style.display = 'block';
+                        this.textContent = '−';
+                    } else {
+                        content.style.display = 'none';
+                        this.textContent = '+';
+                    }
+                });
+            });
+            
+            // Initialize time display
+            updateTimeDisplay();
         });
-      });
 
-      // Save project as JSON download
-      btnSave.addEventListener('click', function () {
-        const project = {
-          title: document.getElementById('projectTitle').textContent,
-          clips: clips
-        };
-        const blob = new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = (project.title || 'project') + '.json';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-      });
-
-      // Load project: show file picker
-      btnLoad.addEventListener('click', function () {
-        fileInput.value = '';
-        fileInput.click();
-      });
-
-      fileInput.addEventListener('change', function (e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function (ev) {
-          try {
-            const data = JSON.parse(ev.target.result);
-            if (!Array.isArray(data.clips)) throw new Error('Invalid project file');
-            clips = data.clips.map(c => ({ id: c.id || uid(), name: c.name || 'Clip', duration: Number(c.duration) || 2, color: c.color || randColor() }));
-            document.getElementById('projectTitle').textContent = data.title || 'Imported Project';
-            selectedClipId = null;
-            renderTimeline();
-            previewLabel.textContent = 'Project imported';
-          } catch (err) {
-            alert('Failed to import project: ' + err.message);
-          }
-        };
-        reader.readAsText(file);
-      });
-
-      // Utility escape
-      function escapeHtml(s) {
-        return String(s).replace(/[&<>"']/g, function (m) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]; });
-      }
-
-      // Keyboard: Enter login
-      usernameInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') passwordInput.focus(); });
-      passwordInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') loginForm.requestSubmit(); });
-
-    })();
-  </script>
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (document.getElementById('editor-screen').classList.contains('hidden')) return;
+            
+            switch(e.code) {
+                case 'Space':
+                    e.preventDefault();
+                    togglePlayback();
+                    break;
+                case 'KeyJ':
+                    currentTime = Math.max(0, currentTime - 1);
+                    updateTimeDisplay();
+                    updatePlayhead();
+                    break;
+                case 'KeyL':
+                    currentTime = Math.min(duration, currentTime + 1);
+                    updateTimeDisplay();
+                    updatePlayhead();
+                    break;
+                case 'Home':
+                    currentTime = 0;
+                    updateTimeDisplay();
+                    updatePlayhead();
+                    break;
+                case 'End':
+                    currentTime = duration;
+                    updateTimeDisplay();
+                    updatePlayhead();
+                    break;
+            }
+        });
+    </script>
 </body>
 </html>
