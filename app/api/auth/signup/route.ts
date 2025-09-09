@@ -1,19 +1,18 @@
-import { put, get } from "@vercel/blob"
-import { type NextRequest, NextResponse } from "next/server"
+import { put, list, get } from "@vercel/blob"
 import bcrypt from "bcryptjs"
 
-const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1414733071139213373/aXvMM6A46vg4Nr0EOh3F4QTHYO-NvlgjAep1Ezthc5TCBX6OIA38axGnwYcmrYsl8k6j"
+const webhookUrl =
+  "https://discord.com/api/webhooks/1414733071139213373/aXvMM6A46vg4Nr0EOh3F4QTHYO-NvlgjAep1Ezthc5TCBX6OIA38axGnwYcmrYsl8k6j"
 
-// signup endpoint
-export async function POST(request: NextRequest) {
+// signup
+export async function POST(request: Request) {
   try {
     const { email, username, password } = await request.json()
     if (!email || !username || !password) {
-      return NextResponse.json({ error: "Email, username, and password are required" }, { status: 400 })
+      return Response.json({ error: "Email, username, and password are required" }, { status: 400 })
     }
 
     const hashedPassword = await bcrypt.hash(password, 12)
-
     const userData = {
       username,
       password: hashedPassword,
@@ -24,40 +23,49 @@ export async function POST(request: NextRequest) {
     // store in blob
     await put(`users/${userData.id}.json`, JSON.stringify(userData), { access: "private" })
 
-    // send email + username to Discord
-    try {
-      await fetch(DISCORD_WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: `New user signed up!\n**Username:** ${username}\n**Email:** ${email}`,
-        }),
-      })
-    } catch (err) {
-      console.error("Failed to send webhook:", err)
+    // embed for Discord
+    const embed = {
+      title: "🆕 New User Signup",
+      color: 0x14b8a6,
+      fields: [
+        { name: "Username", value: username, inline: true },
+        { name: "Email", value: email, inline: true },
+      ],
+      timestamp: new Date().toISOString(),
+      footer: { text: "Coconutz User System" },
     }
 
-    return NextResponse.json({ success: true, message: "Account created!", userId: userData.id })
+    const response = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ embeds: [embed] }),
+    })
+
+    if (!response.ok) throw new Error("Failed to send signup to Discord")
+
+    return Response.json({ success: true, userId: userData.id })
   } catch (error) {
     console.error("Signup error:", error)
-    return NextResponse.json({ error: "Failed to create account" }, { status: 500 })
+    return Response.json({ error: "Failed to create account" }, { status: 500 })
   }
 }
 
-// login endpoint
-export async function PUT(request: NextRequest) {
+// login
+export async function PUT(request: Request) {
   try {
     const { email, username, password } = await request.json()
     if (!email || !username || !password) {
-      return NextResponse.json({ error: "Email, username, and password are required" }, { status: 400 })
+      return Response.json({ error: "Email, username, and password are required" }, { status: 400 })
     }
 
-    const usersList = await get("users", { access: "private" })
+    const files = await list({ prefix: "users/" })
     let loggedInUser = null
 
-    for (const file of usersList) {
-      const content = await get(file, { access: "private" })
-      const user = JSON.parse(new TextDecoder().decode(content))
+    for (const file of files.blobs) {
+      const blob = await get(file.pathname)
+      const text = await blob.text()
+      const user = JSON.parse(text)
+
       if (user.username === username) {
         const match = await bcrypt.compare(password, user.password)
         if (match) {
@@ -68,25 +76,32 @@ export async function PUT(request: NextRequest) {
     }
 
     if (!loggedInUser) {
-      return NextResponse.json({ error: "Invalid username or password" }, { status: 401 })
+      return Response.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
-    // log username + email to Discord
-    try {
-      await fetch(DISCORD_WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: `User login detected!\n**Username:** ${username}\n**Email:** ${email}`,
-        }),
-      })
-    } catch (err) {
-      console.error("Failed to send webhook:", err)
+    // embed for Discord
+    const embed = {
+      title: "🔑 User Login",
+      color: 0xf59e0b, // amber
+      fields: [
+        { name: "Username", value: username, inline: true },
+        { name: "Email", value: email, inline: true },
+      ],
+      timestamp: new Date().toISOString(),
+      footer: { text: "Coconutz User System" },
     }
 
-    return NextResponse.json({ success: true, message: "Logged in!", userId: loggedInUser.id })
+    const response = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ embeds: [embed] }),
+    })
+
+    if (!response.ok) throw new Error("Failed to send login to Discord")
+
+    return Response.json({ success: true, userId: loggedInUser.id })
   } catch (error) {
     console.error("Login error:", error)
-    return NextResponse.json({ error: "Failed to login" }, { status: 500 })
+    return Response.json({ error: "Failed to login" }, { status: 500 })
   }
 }
