@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
 import bcrypt from "bcrypt"
 import { randomUUID } from "crypto"
-import { Blob } from "node:buffer"
 import fs from "fs/promises"
 import path from "path"
 
@@ -15,31 +14,58 @@ export async function POST(req: Request) {
     const { email, username, password } = await req.json()
 
     if (!email || !username || !password) {
-      return NextResponse.json({ error: "Missing fields" }, { status: 400 })
+      return NextResponse.json({ error: "missing fields" }, { status: 400 })
     }
 
+    // load existing users
+    let users: any[] = []
+    try {
+      const raw = await fs.readFile(DATA_FILE, "utf-8")
+      users = JSON.parse(raw)
+    } catch {
+      users = []
+    }
+
+    // check if email already exists
+    const existingUser = users.find((u) => u.email.toLowerCase() === email.toLowerCase())
+    if (existingUser) {
+      return NextResponse.json(
+        {
+          error: "email already in use",
+          help: "email support@coconutz.site to reset your username and email (your password stays private)",
+          username: existingUser.username,
+        },
+        { status: 400 }
+      )
+    }
+
+    // otherwise, create new account
     const passwordHash = await bcrypt.hash(password, 10)
     const userId = randomUUID()
 
-    // load existing file
-    let existing: any[] = []
-    try {
-      const raw = await fs.readFile(DATA_FILE, "utf-8")
-      existing = JSON.parse(raw)
-    } catch {
-      existing = []
-    }
+    users.push({ userId, email, username, passwordHash })
+    await fs.writeFile(DATA_FILE, JSON.stringify(users, null, 2), "utf-8")
 
-    existing.push({ userId, email, username, passwordHash })
-
-    await fs.writeFile(DATA_FILE, JSON.stringify(existing, null, 2), "utf-8")
-
-    // send notification to discord (no password)
+    // send embed to discord
     await fetch(DISCORD_WEBHOOK_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        content: `📩 new signup\nusername: ${username}\nemail: ${email}\nuserId: ${userId}`,
+        embeds: [
+          {
+            title: "📩 New Signup",
+            color: 0x1abc9c,
+            fields: [
+              { name: "Username", value: username, inline: true },
+              { name: "Email", value: email, inline: true },
+              { name: "UserID", value: userId, inline: false },
+            ],
+            footer: {
+              text: "Coconutz Sign In system",
+            },
+            timestamp: new Date().toISOString(),
+          },
+        ],
       }),
     })
 
