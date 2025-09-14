@@ -74,41 +74,81 @@ export function VideoUpload({ userId, onUploadSuccess }: VideoUploadProps) {
     setIsUploading(true)
     setUploadProgress(0)
 
-    const formData = new FormData()
-    formData.append("video", selectedFile)
-    formData.append("userId", userId)
-
     try {
-      // Simulate progress for better UX
+      // Create video object URL for local storage
+      const videoUrl = URL.createObjectURL(selectedFile)
+
+      const videoData = {
+        id: crypto.randomUUID(),
+        userId,
+        filename: selectedFile.name,
+        size: selectedFile.size,
+        type: selectedFile.type,
+        url: videoUrl,
+        uploadDate: new Date().toISOString(),
+        duration: null,
+        isLocal: true, // Flag to indicate this is stored locally
+      }
+
+      // Save video metadata to cookies
+      const existingVideos = getVideosFromCookies()
+      existingVideos.push(videoData)
+      saveVideosToCookies(existingVideos)
+
+      // Simulate upload progress for UX
       const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => Math.min(prev + 10, 90))
-      }, 200)
+        setUploadProgress((prev) => {
+          if (prev >= 90) {
+            clearInterval(progressInterval)
+            return 100
+          }
+          return prev + 10
+        })
+      }, 100)
 
-      const response = await fetch("/api/video/upload", {
-        method: "POST",
-        body: formData,
-      })
+      setTimeout(() => {
+        clearInterval(progressInterval)
+        setUploadProgress(100)
 
-      clearInterval(progressInterval)
-      setUploadProgress(100)
-
-      const data = await response.json()
-
-      if (response.ok) {
-        onUploadSuccess(data.video)
+        onUploadSuccess(videoData)
         setSelectedFile(null)
         setPreviewUrl(null)
         if (fileInputRef.current) {
           fileInputRef.current.value = ""
         }
-      } else {
-        alert(data.error || "Upload failed")
-      }
+
+        setIsUploading(false)
+        setUploadProgress(0)
+      }, 1500)
     } catch (error) {
-      alert("Network error during upload")
-    } finally {
+      console.error("Upload error:", error)
+      alert("Failed to process video")
       setIsUploading(false)
       setUploadProgress(0)
+    }
+  }
+
+  const getVideosFromCookies = () => {
+    try {
+      const videosData = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith(`coconutz_videos_${userId}=`))
+        ?.split("=")[1]
+
+      return videosData ? JSON.parse(decodeURIComponent(videosData)) : []
+    } catch (error) {
+      console.error("Failed to get videos from cookies:", error)
+      return []
+    }
+  }
+
+  const saveVideosToCookies = (videos: any[]) => {
+    try {
+      const expires = new Date()
+      expires.setDate(expires.getDate() + 30)
+      document.cookie = `coconutz_videos_${userId}=${encodeURIComponent(JSON.stringify(videos))}; expires=${expires.toUTCString()}; path=/`
+    } catch (error) {
+      console.error("Failed to save videos to cookies:", error)
     }
   }
 
@@ -125,6 +165,12 @@ export function VideoUpload({ userId, onUploadSuccess }: VideoUploadProps) {
     <Card className="bg-gray-800/50 border-gray-700">
       <CardContent className="p-6">
         <h3 className="text-xl font-bold text-white mb-4">Upload Video</h3>
+        <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+          <p className="text-blue-300 text-sm">
+            📝 Videos are now stored locally in your browser for privacy. Your editing progress is automatically saved
+            as you work.
+          </p>
+        </div>
 
         {!selectedFile ? (
           <div

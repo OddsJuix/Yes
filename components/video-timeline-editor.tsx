@@ -57,6 +57,95 @@ export function VideoTimelineEditor({ video, onSave, onExport }: VideoTimelineEd
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
+    const loadEditingState = () => {
+      try {
+        const savedState = document.cookie
+          .split("; ")
+          .find((row) => row.startsWith(`coconutz_edit_${video.id}=`))
+          ?.split("=")[1]
+
+        if (savedState) {
+          const editData = JSON.parse(decodeURIComponent(savedState))
+
+          // Restore all editing parameters
+          setVolume([editData.volume || 100])
+          setPlaybackSpeed([editData.speed || 1])
+          setTrimStart(editData.trimStart || 0)
+          setTrimEnd(editData.trimEnd || duration)
+          setCuts(editData.cuts || [])
+          setBrightness([editData.brightness || 100])
+          setContrast([editData.contrast || 100])
+          setSaturation([editData.saturation || 100])
+          setBlur([editData.blur || 0])
+          setSelectedFilter(editData.selectedFilter || "none")
+          setTextOverlays(editData.textOverlays || [])
+          setAudioGain([editData.audioGain || 0])
+          setFadeIn([editData.fadeIn || 0])
+          setFadeOut([editData.fadeOut || duration])
+        }
+      } catch (error) {
+        console.error("Failed to load editing state from cookies:", error)
+      }
+    }
+
+    if (duration > 0) {
+      loadEditingState()
+    }
+  }, [video.id, duration])
+
+  useEffect(() => {
+    const saveEditingState = () => {
+      try {
+        const editData = {
+          videoId: video.id,
+          trimStart,
+          trimEnd,
+          cuts,
+          volume: volume[0],
+          speed: playbackSpeed[0],
+          brightness: brightness[0],
+          contrast: contrast[0],
+          saturation: saturation[0],
+          blur: blur[0],
+          selectedFilter,
+          textOverlays,
+          audioGain: audioGain[0],
+          fadeIn: fadeIn[0],
+          fadeOut: fadeOut[0],
+          lastSaved: new Date().toISOString(),
+        }
+
+        // Save to cookie with 30 day expiration
+        const expires = new Date()
+        expires.setDate(expires.getDate() + 30)
+        document.cookie = `coconutz_edit_${video.id}=${encodeURIComponent(JSON.stringify(editData))}; expires=${expires.toUTCString()}; path=/`
+      } catch (error) {
+        console.error("Failed to save editing state to cookies:", error)
+      }
+    }
+
+    // Debounce auto-save to avoid excessive cookie writes
+    const timeoutId = setTimeout(saveEditingState, 1000)
+    return () => clearTimeout(timeoutId)
+  }, [
+    video.id,
+    trimStart,
+    trimEnd,
+    cuts,
+    volume,
+    playbackSpeed,
+    brightness,
+    contrast,
+    saturation,
+    blur,
+    selectedFilter,
+    textOverlays,
+    audioGain,
+    fadeIn,
+    fadeOut,
+  ])
+
+  useEffect(() => {
     const videoElement = videoRef.current
     if (!videoElement) return
 
@@ -238,6 +327,25 @@ export function VideoTimelineEditor({ video, onSave, onExport }: VideoTimelineEd
       fadeOut: fadeOut[0],
       editedAt: new Date().toISOString(),
     }
+
+    try {
+      const expires = new Date()
+      expires.setDate(expires.getDate() + 30)
+      document.cookie = `coconutz_edit_${video.id}=${encodeURIComponent(JSON.stringify(editData))}; expires=${expires.toUTCString()}; path=/`
+
+      // Show success message
+      const event = new CustomEvent("coconutz-notification", {
+        detail: { message: "Project saved to browser storage!", type: "success" },
+      })
+      window.dispatchEvent(event)
+    } catch (error) {
+      console.error("Failed to save project:", error)
+      const event = new CustomEvent("coconutz-notification", {
+        detail: { message: "Failed to save project", type: "error" },
+      })
+      window.dispatchEvent(event)
+    }
+
     onSave?.(editData)
   }
 

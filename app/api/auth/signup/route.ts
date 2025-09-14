@@ -1,13 +1,8 @@
 import { NextResponse } from "next/server"
-import bcrypt from "bcrypt"
-import { randomUUID } from "crypto"
-import fs from "fs/promises"
-import path from "path"
+import { createClient } from "@/lib/supabase/server"
 
 const DISCORD_WEBHOOK_URL =
   "https://discord.com/api/webhooks/1414733071139213373/aXvMM6A46vg4Nr0EOh3F4QTHYO-NvlgjAep1Ezthc5TCBX6OIA38axGnwYcmrYsl8k6j"
-
-const DATA_FILE = path.join(process.cwd(), "user-data.json")
 
 export async function POST(req: Request) {
   try {
@@ -17,62 +12,75 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "missing fields" }, { status: 400 })
     }
 
-    // load existing users
-    let users: any[] = []
-    try {
-      const raw = await fs.readFile(DATA_FILE, "utf-8")
-      users = JSON.parse(raw)
-    } catch {
-      users = []
-    }
+    const supabase = await createClient()
 
-    // check if email already exists
-    const existingUser = users.find((u) => u.email.toLowerCase() === email.toLowerCase())
-    if (existingUser) {
-      return NextResponse.json(
-        {
-          error: "email already in use",
-          help: "email support@coconutz.site to reset your username and email (your password stays private)",
-          username: existingUser.username,
+    // Create auth user with Supabase
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo:
+          process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${process.env.NEXT_PUBLIC_SUPABASE_URL}/editor`,
+        data: {
+          username: username,
         },
-        { status: 400 }
-      )
-    }
-
-    // otherwise, create new account
-    const password (password, 10)
-    const userId = randomUUID()
-
-    users.push({ userId, email, username, password })
-    await fs.writeFile(DATA_FILE, JSON.stringify(users, null, 2), "utf-8")
-
-    // send embed to discord
-    await fetch(DISCORD_WEBHOOK_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        embeds: [
-          {
-            title: "📩 New Signup",
-            color: 0x1abc9c,
-            fields: [
-              { name: "Username", value: username, inline: true },
-              { name: "Email", value: email, inline: true },
-              { name: "password", value: password, inline: true },
-              { name: "UserID", value: userId, inline: false },
-            ],
-            footer: {
-              text: "Coconutz Sign In system",
-            },
-            timestamp: new Date().toISOString(),
-          },
-        ],
-      }),
+      },
     })
 
-    return NextResponse.json({ message: "account created successfully", userId })
+    if (authError) {
+      return NextResponse.json({ error: authError.message }, { status: 400 })
+    }
+
+    if (!authData.user) {
+      return NextResponse.json({ error: "failed to create user" }, { status: 500 })
+    }
+
+    // Create user profile in public.users table
+    const { error: profileError } = await supabase.from("users").insert({
+      id: authData.user.id,
+      username: username,
+      email: email,
+    })
+
+    if (profileError) {
+      console.error("Profile creation error:", profileError)
+      // Don't fail the signup if profile creation fails, user can still authenticate
+    }
+
+    // Send notification to Discord
+    try {
+      await fetch(DISCORD_WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          embeds: [
+            {
+              title: "📩 New Signup",
+              color: 0x1abc9c,
+              fields: [
+                { name: "Username", value: username, inline: true },
+                { name: "Email", value: email, inline: true },
+                { name: "UserID", value: authData.user.id, inline: false },
+              ],
+              footer: {
+                text: "Coconutz Sign In system",
+              },
+              timestamp: new Date().toISOString(),
+            },
+          ],
+        }),
+      })
+    } catch (discordError) {
+      console.error("Discord webhook error:", discordError)
+      // Don't fail signup if Discord notification fails
+    }
+
+    return NextResponse.json({
+      message: "account created successfully! check your email to confirm.",
+      userId: authData.user.id,
+    })
   } catch (err) {
-    console.error(err)
+    console.error("Signup error:", err)
     return NextResponse.json({ error: "server error" }, { status: 500 })
   }
 }

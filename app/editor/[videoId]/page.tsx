@@ -23,16 +23,22 @@ export default function VideoEditorPage() {
           return
         }
 
-        const response = await fetch(`/api/video/list?userId=${userId}`)
-        const data = await response.json()
+        const videosData = document.cookie
+          .split("; ")
+          .find((row) => row.startsWith(`coconutz_videos_${userId}=`))
+          ?.split("=")[1]
 
-        if (response.ok) {
-          const foundVideo = data.videos.find((v: any) => v.id === params.videoId)
+        if (videosData) {
+          const videos = JSON.parse(decodeURIComponent(videosData))
+          const foundVideo = videos.find((v: any) => v.id === params.videoId)
+
           if (foundVideo) {
             setVideo(foundVideo)
           } else {
             router.push("/editor")
           }
+        } else {
+          router.push("/editor")
         }
       } catch (error) {
         console.error("Failed to load video:", error)
@@ -46,22 +52,7 @@ export default function VideoEditorPage() {
   }, [params.videoId, router])
 
   const handleSave = async (editData: any) => {
-    try {
-      // Save edit data to blob storage
-      const response = await fetch("/api/video/save-edit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editData),
-      })
-
-      if (response.ok) {
-        alert("Project saved successfully!")
-      } else {
-        alert("Failed to save project")
-      }
-    } catch (error) {
-      alert("Error saving project")
-    }
+    console.log("Edit data saved automatically to cookies:", editData)
   }
 
   const handleExport = async (exportData: any) => {
@@ -100,7 +91,9 @@ export default function VideoEditorPage() {
             </Button>
             <div>
               <h1 className="text-xl font-bold text-cyan-400">Editing: {video.filename}</h1>
-              <p className="text-gray-300 text-sm">{(video.size / (1024 * 1024)).toFixed(2)} MB</p>
+              <p className="text-gray-300 text-sm">
+                {(video.size / (1024 * 1024)).toFixed(2)} MB • Stored locally in browser
+              </p>
             </div>
           </div>
           {currentExportData && <ExportDialog exportData={currentExportData} onExportStart={handleExportStart} />}

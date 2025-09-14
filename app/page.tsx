@@ -43,6 +43,9 @@ export default function Home() {
           >
             Contact
           </button>
+          <Link href="/developer4hire" className="text-gray-100 hover:text-white transition-colors">
+            Hire Us
+          </Link>
           <Link
             href="/jkwkz"
             className="bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 text-white border-0 rounded-full px-4 py-2 text-sm transition-all"
@@ -90,6 +93,9 @@ export default function Home() {
               >
                 Contact
               </button>
+              <Link href="/developer4hire" className="text-gray-100 hover:text-white transition-colors text-left">
+                Hire Us
+              </Link>
               <Link href="/jkwkz" className="text-pink-400 hover:text-pink-300 transition-colors text-left">
                 Visit GTAG-JKWKZ
               </Link>
@@ -244,6 +250,12 @@ export default function Home() {
               className="bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 text-white px-6 py-3 rounded-full transition-all"
             >
               GTAG-JKWKZ Page
+            </Link>
+            <Link
+              href="/developer4hire"
+              className="border-2 border-teal-400 text-teal-300 hover:bg-teal-400 hover:text-black px-6 py-3 rounded-full transition-all bg-transparent"
+            >
+              Hire Our Team
             </Link>
           </div>
         </div>

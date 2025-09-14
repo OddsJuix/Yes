@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
+import { createClient } from "@/lib/supabase/client"
 
 interface SignupFormProps {
   onSignupSuccess: (userId: string) => void
@@ -25,24 +26,55 @@ export function SignupForm({ onSignupSuccess }: SignupFormProps) {
     setMessage("")
 
     try {
-      const response = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, username, password }),
+      const supabase = createClient()
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/editor`,
+          data: {
+            username: username,
+          },
+        },
       })
 
-      const data = await response.json()
+      if (error) {
+        setMessage(error.message)
+        return
+      }
 
-      if (response.ok) {
-        setMessage(data.message)
-        localStorage.setItem("coconutz_user_id", data.userId)
+      if (data.user) {
+        // Create user profile
+        const { error: profileError } = await supabase.from("users").insert({
+          id: data.user.id,
+          username: username,
+          email: email,
+        })
+
+        if (profileError) {
+          console.error("Profile creation error:", profileError)
+        }
+
+        // Send notification via API
+        try {
+          await fetch("/api/auth/signup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, username, password: "***" }),
+          })
+        } catch (notificationError) {
+          console.error("Notification error:", notificationError)
+        }
+
+        setMessage("account created successfully! check your email to confirm.")
+        localStorage.setItem("coconutz_user_id", data.user.id)
         localStorage.setItem("coconutz_username", username)
 
-        setTimeout(() => onSignupSuccess(data.userId), 1500)
-      } else {
-        setMessage(data.error || "failed to create account")
+        setTimeout(() => onSignupSuccess(data.user.id), 1500)
       }
-    } catch {
+    } catch (error) {
+      console.error("Signup error:", error)
       setMessage("network error. please try again.")
     } finally {
       setIsLoading(false)
@@ -59,7 +91,9 @@ export function SignupForm({ onSignupSuccess }: SignupFormProps) {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-white">username</Label>
+              <Label htmlFor="username" className="text-white">
+                username
+              </Label>
               <Input
                 id="username"
                 type="text"
@@ -71,7 +105,9 @@ export function SignupForm({ onSignupSuccess }: SignupFormProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-white">email</Label>
+              <Label htmlFor="email" className="text-white">
+                email
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -83,7 +119,9 @@ export function SignupForm({ onSignupSuccess }: SignupFormProps) {
               />
             </div>
             <div className="space-y-2 relative">
-              <Label htmlFor="password" className="text-white">password</Label>
+              <Label htmlFor="password" className="text-white">
+                password
+              </Label>
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
@@ -105,7 +143,9 @@ export function SignupForm({ onSignupSuccess }: SignupFormProps) {
               {isLoading ? "creating account..." : "create account"}
             </Button>
             {message && (
-              <p className={`text-center text-sm ${message.includes("success") || message.includes("created") ? "text-green-400" : "text-red-400"}`}>
+              <p
+                className={`text-center text-sm ${message.includes("success") || message.includes("created") ? "text-green-400" : "text-red-400"}`}
+              >
                 {message}
               </p>
             )}

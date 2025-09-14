@@ -4,6 +4,8 @@ import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
+import { CookieConsent } from "@/components/cookie-consent"
+import { NotificationSystem } from "@/components/notification-system"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -23,6 +25,8 @@ export default function RootLayout({
         className={`font-sans ${GeistSans.variable} ${GeistMono.variable} bg-gradient-to-br from-purple-900 via-gray-900 to-black text-white min-h-screen`}
       >
         <Suspense fallback={null}>{children}</Suspense>
+        <CookieConsent />
+        <NotificationSystem />
         <Analytics />
       </body>
     </html>
