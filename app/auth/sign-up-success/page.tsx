@@ -12,7 +12,7 @@ export default function SignUpSuccessPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-gray-300">
-                You&apos;ve successfully signed up. Please check your email to confirm your account before signing in.
+                You&apos;ve successfully signed up. Please check your email to confirm your account before signing in. Please note that we DO NOT collect passwords.
               </p>
             </CardContent>
           </Card>
