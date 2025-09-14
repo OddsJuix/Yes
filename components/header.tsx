@@ -83,6 +83,9 @@ export function Header({ onScrollToSection }: HeaderProps) {
             )}
           </button>
         ))}
+        <Link href="/editor" className="text-gray-100 hover:text-cyan-400 transition-colors font-medium">
+          Video Editor
+        </Link>
         <Link href="/developer4hire" className="text-gray-100 hover:text-white transition-colors">
           Hire Us
         </Link>
@@ -124,6 +127,9 @@ export function Header({ onScrollToSection }: HeaderProps) {
                 {item.label}
               </button>
             ))}
+            <Link href="/editor" className="text-cyan-400 hover:text-cyan-300 transition-colors text-left font-medium">
+              Video Editor
+            </Link>
             <Link href="/developer4hire" className="text-gray-100 hover:text-white transition-colors text-left">
               Hire Us
             </Link>

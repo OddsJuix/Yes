@@ -17,19 +17,10 @@ export default function VideoEditorPage() {
   useEffect(() => {
     const loadVideo = async () => {
       try {
-        const userId = localStorage.getItem("coconutz_user_id")
-        if (!userId) {
-          router.push("/editor")
-          return
-        }
-
-        const videosData = document.cookie
-          .split("; ")
-          .find((row) => row.startsWith(`coconutz_videos_${userId}=`))
-          ?.split("=")[1]
+        const videosData = localStorage.getItem("coconutz_videos")
 
         if (videosData) {
-          const videos = JSON.parse(decodeURIComponent(videosData))
+          const videos = JSON.parse(videosData)
           const foundVideo = videos.find((v: any) => v.id === params.videoId)
 
           if (foundVideo) {

@@ -8,11 +8,10 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Upload, X, Play, Pause } from "lucide-react"
 
 interface VideoUploadProps {
-  userId: string
   onUploadSuccess: (video: any) => void
 }
 
-export function VideoUpload({ userId, onUploadSuccess }: VideoUploadProps) {
+export function VideoUpload({ onUploadSuccess }: VideoUploadProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -80,7 +79,6 @@ export function VideoUpload({ userId, onUploadSuccess }: VideoUploadProps) {
 
       const videoData = {
         id: crypto.randomUUID(),
-        userId,
         filename: selectedFile.name,
         size: selectedFile.size,
         type: selectedFile.type,
@@ -90,10 +88,9 @@ export function VideoUpload({ userId, onUploadSuccess }: VideoUploadProps) {
         isLocal: true, // Flag to indicate this is stored locally
       }
 
-      // Save video metadata to cookies
-      const existingVideos = getVideosFromCookies()
+      const existingVideos = getVideosFromStorage()
       existingVideos.push(videoData)
-      saveVideosToCookies(existingVideos)
+      saveVideosToStorage(existingVideos)
 
       // Simulate upload progress for UX
       const progressInterval = setInterval(() => {
@@ -128,27 +125,21 @@ export function VideoUpload({ userId, onUploadSuccess }: VideoUploadProps) {
     }
   }
 
-  const getVideosFromCookies = () => {
+  const getVideosFromStorage = () => {
     try {
-      const videosData = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith(`coconutz_videos_${userId}=`))
-        ?.split("=")[1]
-
-      return videosData ? JSON.parse(decodeURIComponent(videosData)) : []
+      const videosData = localStorage.getItem("coconutz_videos")
+      return videosData ? JSON.parse(videosData) : []
     } catch (error) {
-      console.error("Failed to get videos from cookies:", error)
+      console.error("Failed to get videos from localStorage:", error)
       return []
     }
   }
 
-  const saveVideosToCookies = (videos: any[]) => {
+  const saveVideosToStorage = (videos: any[]) => {
     try {
-      const expires = new Date()
-      expires.setDate(expires.getDate() + 30)
-      document.cookie = `coconutz_videos_${userId}=${encodeURIComponent(JSON.stringify(videos))}; expires=${expires.toUTCString()}; path=/`
+      localStorage.setItem("coconutz_videos", JSON.stringify(videos))
     } catch (error) {
-      console.error("Failed to save videos to cookies:", error)
+      console.error("Failed to save videos to localStorage:", error)
     }
   }
 
@@ -167,8 +158,8 @@ export function VideoUpload({ userId, onUploadSuccess }: VideoUploadProps) {
         <h3 className="text-xl font-bold text-white mb-4">Upload Video</h3>
         <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
           <p className="text-blue-300 text-sm">
-            📝 Videos are now stored locally in your browser for privacy. Your editing progress is automatically saved
-            as you work.
+            📝 Videos are stored locally in your browser for privacy. Your editing progress is automatically saved as
+            you work.
           </p>
         </div>
 

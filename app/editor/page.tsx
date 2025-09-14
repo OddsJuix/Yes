@@ -3,49 +3,39 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { SignupForm } from "@/components/signup-form"
 import { VideoUpload } from "@/components/video-upload"
 
 export default function EditorPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const [username, setUsername] = useState("")
-  const [userId, setUserId] = useState("")
   const [videos, setVideos] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const storedUserId = localStorage.getItem("coconutz_user_id")
-    const storedUsername = localStorage.getItem("coconutz_username")
-
-    if (storedUserId && storedUsername) {
-      setIsAuthenticated(true)
-      setUsername(storedUsername)
-      setUserId(storedUserId)
-      loadUserVideos(storedUserId)
-    }
+    loadUserVideos()
     setIsLoading(false)
   }, [])
 
-  const loadUserVideos = async (userId: string) => {
+  const loadUserVideos = () => {
     try {
-      const response = await fetch(`/api/video/list?userId=${userId}`)
-      const data = await response.json()
-      if (response.ok) {
-        setVideos(data.videos)
+      const videosData = localStorage.getItem("coconutz_videos")
+      if (videosData) {
+        const parsedVideos = JSON.parse(videosData)
+        setVideos(parsedVideos)
       }
     } catch (error) {
       console.error("Failed to load videos:", error)
     }
   }
 
-  const handleSignupSuccess = (userId: string) => {
-    setIsAuthenticated(true)
-    setUsername(localStorage.getItem("coconutz_username") || "")
-    setUserId(userId)
+  const handleUploadSuccess = (video: any) => {
+    const newVideos = [video, ...videos]
+    setVideos(newVideos)
+    localStorage.setItem("coconutz_videos", JSON.stringify(newVideos))
   }
 
-  const handleUploadSuccess = (video: any) => {
-    setVideos((prev) => [video, ...prev])
+  const deleteVideo = (videoId: string) => {
+    const updatedVideos = videos.filter((video) => video.id !== videoId)
+    setVideos(updatedVideos)
+    localStorage.setItem("coconutz_videos", JSON.stringify(updatedVideos))
   }
 
   if (isLoading) {
@@ -56,10 +46,6 @@ export default function EditorPage() {
     )
   }
 
-  if (!isAuthenticated) {
-    return <SignupForm onSignupSuccess={handleSignupSuccess} />
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-gray-900 to-black text-white">
       {/* Header */}
@@ -68,19 +54,9 @@ export default function EditorPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-cyan-400">Coconutz Video Editor</h1>
-              <p className="text-gray-300 text-sm">Welcome back, {username}!</p>
+              <p className="text-gray-300 text-sm">Create and edit videos with timeline controls</p>
             </div>
             <div className="flex gap-3">
-              <Button
-                onClick={() => {
-                  localStorage.removeItem("coconutz_user_id")
-                  localStorage.removeItem("coconutz_username")
-                  setIsAuthenticated(false)
-                }}
-                className="bg-gray-600 hover:bg-gray-700 text-white border-0 rounded-xl px-4 py-2"
-              >
-                Sign Out
-              </Button>
               <Link href="/">
                 <Button className="bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 text-white border-0 rounded-xl px-6 py-2">
                   Back to Main
@@ -96,7 +72,7 @@ export default function EditorPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Upload Section */}
           <div className="lg:col-span-1">
-            <VideoUpload userId={userId} onUploadSuccess={handleUploadSuccess} />
+            <VideoUpload onUploadSuccess={handleUploadSuccess} />
           </div>
 
           {/* Video Library */}
@@ -123,14 +99,22 @@ export default function EditorPage() {
                       <p className="text-gray-400 text-xs">
                         {(video.size / (1024 * 1024)).toFixed(2)} MB • {new Date(video.uploadDate).toLocaleDateString()}
                       </p>
-                      <Button
-                        className="w-full mt-3 bg-cyan-500 hover:bg-cyan-600 text-white text-sm"
-                        onClick={() => {
-                          window.location.href = `/editor/${video.id}`
-                        }}
-                      >
-                        Edit Video
-                      </Button>
+                      <div className="flex gap-2 mt-3">
+                        <Button
+                          className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white text-sm"
+                          onClick={() => {
+                            window.location.href = `/editor/${video.id}`
+                          }}
+                        >
+                          Edit Video
+                        </Button>
+                        <Button
+                          className="bg-red-500 hover:bg-red-600 text-white text-sm px-3"
+                          onClick={() => deleteVideo(video.id)}
+                        >
+                          ×
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
