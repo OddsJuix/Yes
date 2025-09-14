@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
           status: "completed",
           progress: 100,
           completedAt: new Date().toISOString(),
-          downloadUrl: `https://example.com/exports/${exportId}.mp4`, // Simulated download URL
+          downloadUrl: `https://coconutz.site/exports/${exportId}.mp4`, // Simulated download URL
         }
 
         await put(`exports/${exportId}.json`, JSON.stringify(completedJob), {
