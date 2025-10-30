@@ -22,39 +22,62 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
+    console.log("[v0] Starting login process")
+
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const supabase = createClient()
+      console.log("[v0] Supabase client created")
+
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
+
+      console.log("[v0] Login response:", { data, error })
+
       if (error) throw error
+
+      console.log("[v0] Login successful, redirecting to editor")
       router.push("/editor")
+      router.refresh()
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred")
+      console.error("[v0] Login error:", error)
+      setError(error instanceof Error ? error.message : "An error occurred during login")
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleDiscordLogin = async () => {
-    const supabase = createClient()
     setIsDiscordLoading(true)
     setError(null)
 
+    console.log("[v0] Starting Discord login")
+
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const supabase = createClient()
+      console.log("[v0] Supabase client created for Discord")
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "discord",
         options: {
           redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
         },
       })
+
+      console.log("[v0] Discord OAuth response:", { data, error })
+
       if (error) throw error
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Discord login failed")
+      console.error("[v0] Discord login error:", error)
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Discord login failed. Make sure Discord OAuth is enabled in your Supabase project.",
+      )
       setIsDiscordLoading(false)
     }
   }
@@ -121,7 +144,11 @@ export default function LoginPage() {
                         className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                       />
                     </div>
-                    {error && <p className="text-sm text-red-400">{error}</p>}
+                    {error && (
+                      <div className="p-3 rounded-md bg-red-500/10 border border-red-500/50">
+                        <p className="text-sm text-red-400">{error}</p>
+                      </div>
+                    )}
                     <Button type="submit" className="w-full bg-teal-500 hover:bg-teal-600" disabled={isLoading}>
                       {isLoading ? "Logging in..." : "Login"}
                     </Button>

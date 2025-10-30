@@ -24,9 +24,10 @@ export default function SignUpPage() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
+
+    console.log("[v0] Starting sign-up process")
 
     if (password !== repeatPassword) {
       setError("Passwords do not match")
@@ -35,6 +36,9 @@ export default function SignUpPage() {
     }
 
     try {
+      const supabase = createClient()
+      console.log("[v0] Supabase client created")
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -46,9 +50,12 @@ export default function SignUpPage() {
         },
       })
 
+      console.log("[v0] Sign-up response:", { data, error })
+
       if (error) throw error
 
       if (data.user) {
+        console.log("[v0] Creating user profile")
         // Create user profile
         const { error: profileError } = await supabase.from("users").insert({
           id: data.user.id,
@@ -57,33 +64,49 @@ export default function SignUpPage() {
         })
 
         if (profileError) {
-          console.error("Profile creation error:", profileError)
+          console.error("[v0] Profile creation error:", profileError)
+        } else {
+          console.log("[v0] Profile created successfully")
         }
       }
 
+      console.log("[v0] Sign-up successful, redirecting")
       router.push("/auth/sign-up-success")
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred")
+      console.error("[v0] Sign-up error:", error)
+      setError(error instanceof Error ? error.message : "An error occurred during sign-up")
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleDiscordSignUp = async () => {
-    const supabase = createClient()
     setIsDiscordLoading(true)
     setError(null)
 
+    console.log("[v0] Starting Discord sign-up")
+
     try {
+      const supabase = createClient()
+      console.log("[v0] Supabase client created for Discord")
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "discord",
         options: {
           redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
         },
       })
+
+      console.log("[v0] Discord OAuth response:", { error })
+
       if (error) throw error
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Discord signup failed")
+      console.error("[v0] Discord sign-up error:", error)
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Discord signup failed. Make sure Discord OAuth is enabled in your Supabase project.",
+      )
       setIsDiscordLoading(false)
     }
   }
@@ -175,7 +198,11 @@ export default function SignUpPage() {
                         className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                       />
                     </div>
-                    {error && <p className="text-sm text-red-400">{error}</p>}
+                    {error && (
+                      <div className="p-3 rounded-md bg-red-500/10 border border-red-500/50">
+                        <p className="text-sm text-red-400">{error}</p>
+                      </div>
+                    )}
                     <Button type="submit" className="w-full bg-teal-500 hover:bg-teal-600" disabled={isLoading}>
                       {isLoading ? "Creating account..." : "Sign up"}
                     </Button>
