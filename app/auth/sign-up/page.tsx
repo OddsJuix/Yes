@@ -84,11 +84,11 @@ export default function SignUpPage() {
     setIsDiscordLoading(true)
     setError(null)
 
-    console.log("[v0] Starting Discord sign-up")
+    console.log("Starting Discord sign-up")
 
     try {
       const supabase = createClient()
-      console.log("[v0] Supabase client created for Discord")
+      console.log("Supabase client created for Discord")
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "discord",
@@ -97,11 +97,11 @@ export default function SignUpPage() {
         },
       })
 
-      console.log("[v0] Discord OAuth response:", { error })
+      console.log("Discord OAuth response:", { error })
 
       if (error) throw error
     } catch (error: unknown) {
-      console.error("[v0] Discord sign-up error:", error)
+      console.error("Discord sign-up error:", error)
       setError(
         error instanceof Error
           ? error.message
