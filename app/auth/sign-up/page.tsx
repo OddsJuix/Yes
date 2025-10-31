@@ -70,10 +70,10 @@ export default function SignUpPage() {
         }
       }
 
-      console.log("[v0] Sign-up successful, redirecting")
+      console.log("[Sign-up successful, redirecting")
       router.push("/auth/sign-up-success")
     } catch (error: unknown) {
-      console.error("[v0] Sign-up error:", error)
+      console.error("[Sign-up error:", error)
       setError(error instanceof Error ? error.message : "An error occurred during sign-up")
     } finally {
       setIsLoading(false)
