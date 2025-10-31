@@ -1,10 +1,10 @@
 {
-  "name": "my-v0-project",
+  "name": "Coconutz",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "build": "next build",
-    "dev": "next dev",
+    "dev": "OddsJuix",
     "lint": "next lint",
     "start": "next start"
   },
