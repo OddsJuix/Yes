@@ -50,12 +50,12 @@ export default function SignUpPage() {
         },
       })
 
-      console.log("[v0] Sign-up response:", { data, error })
+      console.log("Sign-up response:", { data, error })
 
       if (error) throw error
 
       if (data.user) {
-        console.log("[v0] Creating user profile")
+        console.log("Creating user profile")
         // Create user profile
         const { error: profileError } = await supabase.from("users").insert({
           id: data.user.id,
