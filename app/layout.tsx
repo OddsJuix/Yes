@@ -7,7 +7,6 @@ import { Suspense } from "react"
 import { CookieConsent } from "@/components/cookie-consent"
 import { NotificationSystem } from "@/components/notification-system"
 import "./globals.css"
-
 import { Geist as V0_Font_Geist, Geist_Mono as V0_Font_Geist_Mono, Source_Serif_4 as V0_Font_Source_Serif_4 } from 'next/font/google'
 
 // Initialize fonts
@@ -57,7 +56,7 @@ export default function RootLayout({
         <link rel="canonical" href="https://coconutz.studio" />
       </head>
       <body
-        className={`font-sans ${GeistSans.variable} ${GeistMono.variable} bg-gradient-to-br from-purple-900 via-gray-900 to-black text-white min-h-screen ${_v0_fontVariables}`}
+        className={`${GeistSans.variable} ${GeistMono.variable} font-sans bg-gradient-to-br from-purple-900 via-gray-900 to-black text-white min-h-screen ${_v0_fontVariables}`}
       >
         <Suspense fallback={null}>{children}</Suspense>
         <CookieConsent />
