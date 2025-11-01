@@ -7,7 +7,7 @@ import { Suspense } from "react"
 import { CookieConsent } from "@/components/cookie-consent"
 import { NotificationSystem } from "@/components/notification-system"
 import "./globals.css"
-import { Oxanium as V0_Font_Oxanium, Source_Code_Pro as V0_Font_Source_Code_Pro, Source_Serif_4 as V0_Font_Source_Serif_4 } from '@/lib/fonts'
+import { Oxanium as V0_Font_Oxanium, Source_Code_Pro as V0_Font_Source_Code_Pro, Source_Serif_4 as V0_Font_Source_Serif_4 } from 'next/font/google'
 
 // Initialize fonts
 const _oxanium = V0_Font_Oxanium({ subsets: ['latin'], weight: ["200","300","400","500","600","700","800"], variable: '--v0-font-oxanium' })
