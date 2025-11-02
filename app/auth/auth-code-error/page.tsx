@@ -4,8 +4,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 import { AlertTriangle } from "lucide-react"
+import { useSearchParams } from "next/navigation"
+import { Suspense } from "react"
 
-export default function AuthCodeErrorPage() {
+function ErrorContent() {
+  const searchParams = useSearchParams()
+  const error = searchParams.get("error")
+
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10 bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
       <div className="w-full max-w-sm">
@@ -20,6 +25,11 @@ export default function AuthCodeErrorPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center space-y-4">
+            {error && (
+              <div className="p-3 rounded-md bg-red-500/10 border border-red-500/50 mb-4">
+                <p className="text-sm text-red-400 font-mono">{error}</p>
+              </div>
+            )}
             <p className="text-gray-300 text-sm">
               The authentication process was interrupted or failed. This could be due to:
             </p>
@@ -27,6 +37,7 @@ export default function AuthCodeErrorPage() {
               <li>• Canceling the Discord authorization</li>
               <li>• Network connectivity issues</li>
               <li>• Temporary Discord service problems</li>
+              <li>• Incorrect redirect URL configuration</li>
             </ul>
             <div className="flex flex-col gap-3 pt-4">
               <Link href="/auth/login">
@@ -45,5 +56,13 @@ export default function AuthCodeErrorPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function AuthCodeErrorPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ErrorContent />
+    </Suspense>
   )
 }
