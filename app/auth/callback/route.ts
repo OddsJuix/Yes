@@ -47,9 +47,9 @@ export async function GET(request: NextRequest) {
           })
 
           if (profileError) {
-            console.error("[v0] Profile creation error:", profileError)
+            console.error("Profile creation error:", profileError)
           } else {
-            console.log("[v0] User profile created successfully")
+            console.log("User profile created successfully")
           }
 
           // Send Discord notification for new Discord signup
@@ -76,24 +76,24 @@ export async function GET(request: NextRequest) {
                 ],
               }),
             })
-            console.log("[v0] Discord webhook notification sent")
+            console.log("Discord webhook notification sent")
           } catch (discordError) {
-            console.error("[v0] Discord webhook error:", discordError)
+            console.error("Discord webhook error:", discordError)
           }
         } else {
-          console.log("[v0] Existing user found, skipping profile creation")
+          console.log("Existing user found, skipping profile creation")
         }
 
-        console.log("[v0] Redirecting to:", `${origin}${next}`)
+        console.log("[Redirecting to:", `${origin}${next}`)
         return NextResponse.redirect(`${origin}${next}`)
       }
     } catch (error) {
-      console.error("[v0] Unexpected error in callback:", error)
+      console.error("Unexpected error in callback:", error)
       return NextResponse.redirect(`${origin}/auth/auth-code-error?error=unexpected`)
     }
   }
 
-  console.log("[v0] No code provided, redirecting to error page")
+  console.log("No code provided, redirecting to error page")
   // Return the user to an error page with instructions
   return NextResponse.redirect(`${origin}/auth/auth-code-error?error=no_code`)
 }
