@@ -27,7 +27,7 @@ export default function SignUpPage() {
     setIsLoading(true)
     setError(null)
 
-    console.log("Starting sign-up process")
+    console.log("[v0] Starting sign-up process")
 
     if (password !== repeatPassword) {
       setError("Passwords do not match")
@@ -37,26 +37,43 @@ export default function SignUpPage() {
 
     try {
       const supabase = createClient()
-      console.log("Supabase client created")
+      console.log("[v0] Supabase client created")
+
+      const getRedirectUrl = () => {
+        if (typeof window !== "undefined") {
+          const hostname = window.location.hostname
+
+          if (hostname.includes("vercel.app") || hostname.includes("coconutz.com")) {
+            return `${window.location.origin}/editor`
+          }
+
+          if (hostname === "localhost" || hostname === "127.0.0.1") {
+            return process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/editor`
+          }
+
+          return `${window.location.origin}/editor`
+        }
+
+        return "/editor"
+      }
 
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/editor`,
+          emailRedirectTo: getRedirectUrl(),
           data: {
             username: username,
           },
         },
       })
 
-      console.log("Sign-up response:", { data, error })
+      console.log("[v0] Sign-up response:", { data, error })
 
       if (error) throw error
 
       if (data.user) {
-        console.log("Creating user profile")
-        // Create user profile
+        console.log("[v0] Creating user profile")
         const { error: profileError } = await supabase.from("users").insert({
           id: data.user.id,
           username: username,
@@ -64,16 +81,16 @@ export default function SignUpPage() {
         })
 
         if (profileError) {
-          console.error("Profile creation error:", profileError)
+          console.error("[v0] Profile creation error:", profileError)
         } else {
-          console.log("Profile created successfully")
+          console.log("[v0] Profile created successfully")
         }
       }
 
-      console.log("[Sign-up successful, redirecting")
+      console.log("[v0] Sign-up successful, redirecting")
       router.push("/auth/sign-up-success")
     } catch (error: unknown) {
-      console.error("[Sign-up error:", error)
+      console.error("[v0] Sign-up error:", error)
       setError(error instanceof Error ? error.message : "An error occurred during sign-up")
     } finally {
       setIsLoading(false)
@@ -84,24 +101,45 @@ export default function SignUpPage() {
     setIsDiscordLoading(true)
     setError(null)
 
-    console.log("Starting Discord sign-up")
+    console.log("[v0] Starting Discord sign-up")
 
     try {
       const supabase = createClient()
-      console.log("Supabase client created for Discord")
+      console.log("[v0] Supabase client created for Discord")
+
+      const getRedirectUrl = () => {
+        if (typeof window !== "undefined") {
+          const hostname = window.location.hostname
+
+          if (hostname.includes("vercel.app") || hostname.includes("coconutz.com")) {
+            return `${window.location.origin}/auth/callback`
+          }
+
+          if (hostname === "localhost" || hostname === "127.0.0.1") {
+            return process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback`
+          }
+
+          return `${window.location.origin}/auth/callback`
+        }
+
+        return "/auth/callback"
+      }
+
+      const redirectUrl = getRedirectUrl()
+      console.log("[v0] Discord redirect URL:", redirectUrl)
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "discord",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+          redirectTo: `${redirectUrl}?next=/dashboard`,
         },
       })
 
-      console.log("Discord OAuth response:", { error })
+      console.log("[v0] Discord OAuth response:", { error })
 
       if (error) throw error
     } catch (error: unknown) {
-      console.error("Discord sign-up error:", error)
+      console.error("[v0] Discord sign-up error:", error)
       setError(
         error instanceof Error
           ? error.message

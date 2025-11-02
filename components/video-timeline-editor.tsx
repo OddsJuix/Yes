@@ -29,7 +29,7 @@ export function VideoTimelineEditor({ video, onSave, onExport }: VideoTimelineEd
   const [playbackSpeed, setPlaybackSpeed] = useState([1])
   const [trimStart, setTrimStart] = useState(0)
   const [trimEnd, setTrimEnd] = useState(0)
-  const [cuts, setCuts] = useState<number[]>([])
+  const [cuts, setCuts] = useState<Array<{ start: number; end: number }>>([])
 
   const [brightness, setBrightness] = useState([100])
   const [contrast, setContrast] = useState([100])
@@ -48,26 +48,17 @@ export function VideoTimelineEditor({ video, onSave, onExport }: VideoTimelineEd
     }>
   >([])
   const [selectedFilter, setSelectedFilter] = useState("none")
-  const [audioGain, setAudioGain] = useState([0])
-  const [fadeIn, setFadeIn] = useState([0])
-  const [fadeOut, setFadeOut] = useState([0])
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const timelineRef = useRef<HTMLDivElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const loadEditingState = () => {
       try {
-        const savedState = document.cookie
-          .split("; ")
-          .find((row) => row.startsWith(`coconutz_edit_${video.id}=`))
-          ?.split("=")[1]
-
+        const savedState = localStorage.getItem(`coconutz_edit_${video.id}`)
         if (savedState) {
-          const editData = JSON.parse(decodeURIComponent(savedState))
-
-          // Restore all editing parameters
+          const editData = JSON.parse(savedState)
           setVolume([editData.volume || 100])
           setPlaybackSpeed([editData.speed || 1])
           setTrimStart(editData.trimStart || 0)
@@ -79,12 +70,9 @@ export function VideoTimelineEditor({ video, onSave, onExport }: VideoTimelineEd
           setBlur([editData.blur || 0])
           setSelectedFilter(editData.selectedFilter || "none")
           setTextOverlays(editData.textOverlays || [])
-          setAudioGain([editData.audioGain || 0])
-          setFadeIn([editData.fadeIn || 0])
-          setFadeOut([editData.fadeOut || duration])
         }
       } catch (error) {
-        console.error("Failed to load editing state from cookies:", error)
+        console.error("[v0] Failed to load editing state:", error)
       }
     }
 
@@ -109,22 +97,14 @@ export function VideoTimelineEditor({ video, onSave, onExport }: VideoTimelineEd
           blur: blur[0],
           selectedFilter,
           textOverlays,
-          audioGain: audioGain[0],
-          fadeIn: fadeIn[0],
-          fadeOut: fadeOut[0],
           lastSaved: new Date().toISOString(),
         }
-
-        // Save to cookie with 30 day expiration
-        const expires = new Date()
-        expires.setDate(expires.getDate() + 30)
-        document.cookie = `coconutz_edit_${video.id}=${encodeURIComponent(JSON.stringify(editData))}; expires=${expires.toUTCString()}; path=/`
+        localStorage.setItem(`coconutz_edit_${video.id}`, JSON.stringify(editData))
       } catch (error) {
-        console.error("Failed to save editing state to cookies:", error)
+        console.error("[v0] Failed to save editing state:", error)
       }
     }
 
-    // Debounce auto-save to avoid excessive cookie writes
     const timeoutId = setTimeout(saveEditingState, 1000)
     return () => clearTimeout(timeoutId)
   }, [
@@ -140,9 +120,6 @@ export function VideoTimelineEditor({ video, onSave, onExport }: VideoTimelineEd
     blur,
     selectedFilter,
     textOverlays,
-    audioGain,
-    fadeIn,
-    fadeOut,
   ])
 
   useEffect(() => {
@@ -150,18 +127,38 @@ export function VideoTimelineEditor({ video, onSave, onExport }: VideoTimelineEd
     if (!videoElement) return
 
     const handleLoadedMetadata = () => {
+      console.log("[v0] Video loaded, duration:", videoElement.duration)
       setDuration(videoElement.duration)
       setTrimEnd(videoElement.duration)
-      setFadeOut([videoElement.duration])
     }
 
     const handleTimeUpdate = () => {
       setCurrentTime(videoElement.currentTime)
-      applyVideoEffects()
+
+      const currentCut = cuts.find((cut) => videoElement.currentTime >= cut.start && videoElement.currentTime < cut.end)
+      if (currentCut) {
+        videoElement.currentTime = currentCut.end
+      }
+
+      if (videoElement.currentTime < trimStart) {
+        videoElement.currentTime = trimStart
+      }
+      if (videoElement.currentTime > trimEnd) {
+        videoElement.pause()
+        videoElement.currentTime = trimStart
+        setIsPlaying(false)
+      }
     }
 
-    const handlePlay = () => setIsPlaying(true)
-    const handlePause = () => setIsPlaying(false)
+    const handlePlay = () => {
+      console.log("[v0] Video playing")
+      setIsPlaying(true)
+    }
+
+    const handlePause = () => {
+      console.log("[v0] Video paused")
+      setIsPlaying(false)
+    }
 
     videoElement.addEventListener("loadedmetadata", handleLoadedMetadata)
     videoElement.addEventListener("timeupdate", handleTimeUpdate)
@@ -174,40 +171,22 @@ export function VideoTimelineEditor({ video, onSave, onExport }: VideoTimelineEd
       videoElement.removeEventListener("play", handlePlay)
       videoElement.removeEventListener("pause", handlePause)
     }
-  }, [])
+  }, [cuts, trimStart, trimEnd])
 
-  const applyVideoEffects = () => {
+  useEffect(() => {
     const video = videoRef.current
-    const canvas = canvasRef.current
-    if (!video || !canvas) return
+    if (!video) return
 
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
-
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
-
-    // Apply filters
     const filterString = `
       brightness(${brightness[0]}%) 
       contrast(${contrast[0]}%) 
       saturate(${saturation[0]}%) 
       blur(${blur[0]}px)
       ${selectedFilter !== "none" ? getFilterEffect(selectedFilter) : ""}
-    `
+    `.trim()
 
-    ctx.filter = filterString
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-
-    // Draw text overlays
-    textOverlays.forEach((overlay) => {
-      if (currentTime >= overlay.startTime && currentTime <= overlay.endTime) {
-        ctx.font = `${overlay.size}px Arial`
-        ctx.fillStyle = overlay.color
-        ctx.fillText(overlay.text, overlay.x, overlay.y)
-      }
-    })
-  }
+    video.style.filter = filterString
+  }, [brightness, contrast, saturation, blur, selectedFilter])
 
   const getFilterEffect = (filter: string) => {
     switch (filter) {
@@ -229,20 +208,29 @@ export function VideoTimelineEditor({ video, onSave, onExport }: VideoTimelineEd
   }
 
   const togglePlayPause = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause()
-      } else {
-        videoRef.current.play()
+    const video = videoRef.current
+    if (!video) return
+
+    console.log("[v0] Toggle play/pause, current state:", isPlaying)
+
+    if (isPlaying) {
+      video.pause()
+    } else {
+      // Start from trim start if at the end
+      if (video.currentTime >= trimEnd || video.currentTime < trimStart) {
+        video.currentTime = trimStart
       }
+      video.play().catch((err) => console.error("[v0] Play error:", err))
     }
   }
 
   const seekTo = (time: number) => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = time
-      setCurrentTime(time)
-    }
+    const video = videoRef.current
+    if (!video) return
+
+    const clampedTime = Math.max(trimStart, Math.min(trimEnd, time))
+    video.currentTime = clampedTime
+    setCurrentTime(clampedTime)
   }
 
   const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -253,17 +241,20 @@ export function VideoTimelineEditor({ video, onSave, onExport }: VideoTimelineEd
     const timelineWidth = rect.width
     const clickTime = (clickX / timelineWidth) * duration
 
-    seekTo(Math.max(0, Math.min(duration, clickTime)))
+    seekTo(clickTime)
   }
 
   const addCut = () => {
-    if (!cuts.includes(currentTime)) {
-      setCuts([...cuts, currentTime].sort((a, b) => a - b))
-    }
+    const cutStart = currentTime
+    const cutEnd = Math.min(currentTime + 1, duration) // 1 second cut by default
+
+    const newCut = { start: cutStart, end: cutEnd }
+    setCuts([...cuts, newCut].sort((a, b) => a.start - b.start))
+    console.log("[v0] Added cut:", newCut)
   }
 
-  const removeCut = (cutTime: number) => {
-    setCuts(cuts.filter((cut) => cut !== cutTime))
+  const removeCut = (index: number) => {
+    setCuts(cuts.filter((_, i) => i !== index))
   }
 
   const addTextOverlay = () => {
@@ -271,8 +262,8 @@ export function VideoTimelineEditor({ video, onSave, onExport }: VideoTimelineEd
       id: crypto.randomUUID(),
       text: "Sample Text",
       x: 50,
-      y: 100,
-      size: 24,
+      y: 50,
+      size: 32,
       color: "#ffffff",
       startTime: currentTime,
       endTime: Math.min(currentTime + 5, duration),
@@ -291,7 +282,8 @@ export function VideoTimelineEditor({ video, onSave, onExport }: VideoTimelineEd
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60)
     const seconds = Math.floor(time % 60)
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`
+    const ms = Math.floor((time % 1) * 10)
+    return `${minutes}:${seconds.toString().padStart(2, "0")}.${ms}`
   }
 
   const handleVolumeChange = (value: number[]) => {
@@ -322,28 +314,15 @@ export function VideoTimelineEditor({ video, onSave, onExport }: VideoTimelineEd
       blur: blur[0],
       selectedFilter,
       textOverlays,
-      audioGain: audioGain[0],
-      fadeIn: fadeIn[0],
-      fadeOut: fadeOut[0],
       editedAt: new Date().toISOString(),
     }
 
     try {
-      const expires = new Date()
-      expires.setDate(expires.getDate() + 30)
-      document.cookie = `coconutz_edit_${video.id}=${encodeURIComponent(JSON.stringify(editData))}; expires=${expires.toUTCString()}; path=/`
-
-      // Show success message
-      const event = new CustomEvent("coconutz-notification", {
-        detail: { message: "Project saved to browser storage!", type: "success" },
-      })
-      window.dispatchEvent(event)
+      localStorage.setItem(`coconutz_edit_${video.id}`, JSON.stringify(editData))
+      alert("Project saved successfully!")
     } catch (error) {
-      console.error("Failed to save project:", error)
-      const event = new CustomEvent("coconutz-notification", {
-        detail: { message: "Failed to save project", type: "error" },
-      })
-      window.dispatchEvent(event)
+      console.error("[v0] Failed to save project:", error)
+      alert("Failed to save project")
     }
 
     onSave?.(editData)
@@ -365,49 +344,67 @@ export function VideoTimelineEditor({ video, onSave, onExport }: VideoTimelineEd
       blur: blur[0],
       selectedFilter,
       textOverlays,
-      audioGain: audioGain[0],
-      fadeIn: fadeIn[0],
-      fadeOut: fadeOut[0],
     }
     onExport?.(exportData)
+    alert("Export configuration saved! In a production app, this would render the video with all effects applied.")
   }
 
   return (
-    <div className="h-full flex flex-col bg-gray-900">
+    <div ref={containerRef} className="h-full flex flex-col bg-gray-900">
       {/* Video Preview */}
       <div className="flex-1 bg-black flex items-center justify-center p-4 relative">
-        <video
-          ref={videoRef}
-          src={video.url}
-          className="max-w-full max-h-full object-contain"
-          onLoadedMetadata={() => {
-            if (videoRef.current) {
-              videoRef.current.volume = volume[0] / 100
-              videoRef.current.playbackRate = playbackSpeed[0]
+        <div className="relative max-w-full max-h-full">
+          <video
+            ref={videoRef}
+            src={video.url}
+            className="max-w-full max-h-full object-contain"
+            onLoadedMetadata={() => {
+              if (videoRef.current) {
+                videoRef.current.volume = volume[0] / 100
+                videoRef.current.playbackRate = playbackSpeed[0]
+              }
+            }}
+          />
+
+          {textOverlays.map((overlay) => {
+            if (currentTime >= overlay.startTime && currentTime <= overlay.endTime) {
+              return (
+                <div
+                  key={overlay.id}
+                  className="absolute pointer-events-none"
+                  style={{
+                    left: `${overlay.x}%`,
+                    top: `${overlay.y}%`,
+                    fontSize: `${overlay.size}px`,
+                    color: overlay.color,
+                    fontWeight: "bold",
+                    textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
+                    transform: "translate(-50%, -50%)",
+                  }}
+                >
+                  {overlay.text}
+                </div>
+              )
             }
-          }}
-        />
-        <canvas
-          ref={canvasRef}
-          className="absolute max-w-full max-h-full object-contain pointer-events-none"
-          style={{ display: "none" }}
-        />
+            return null
+          })}
+        </div>
       </div>
 
       {/* Controls */}
       <div className="bg-gray-800 p-4 space-y-4">
         {/* Playback Controls */}
         <div className="flex items-center justify-center gap-4">
-          <Button onClick={() => seekTo(Math.max(0, currentTime - 10))} className="bg-gray-700 hover:bg-gray-600">
-            <SkipBack className="h-4 w-4" />
-          </Button>
-          <Button onClick={togglePlayPause} className="bg-cyan-500 hover:bg-cyan-600 px-6">
-            {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-          </Button>
           <Button
-            onClick={() => seekTo(Math.min(duration, currentTime + 10))}
+            onClick={() => seekTo(Math.max(trimStart, currentTime - 5))}
             className="bg-gray-700 hover:bg-gray-600"
           >
+            <SkipBack className="h-4 w-4" />
+          </Button>
+          <Button onClick={togglePlayPause} className="bg-cyan-500 hover:bg-cyan-600 px-8 py-6">
+            {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+          </Button>
+          <Button onClick={() => seekTo(Math.min(trimEnd, currentTime + 5))} className="bg-gray-700 hover:bg-gray-600">
             <SkipForward className="h-4 w-4" />
           </Button>
         </div>
@@ -421,7 +418,7 @@ export function VideoTimelineEditor({ video, onSave, onExport }: VideoTimelineEd
 
           <div
             ref={timelineRef}
-            className="relative h-12 bg-gray-700 rounded cursor-pointer"
+            className="relative h-16 bg-gray-700 rounded cursor-pointer"
             onClick={handleTimelineClick}
           >
             {/* Timeline track */}
@@ -429,44 +426,58 @@ export function VideoTimelineEditor({ video, onSave, onExport }: VideoTimelineEd
 
             {/* Trim indicators */}
             <div
-              className="absolute top-0 bottom-0 bg-red-500/30 border-l-2 border-red-500"
+              className="absolute top-0 bottom-0 bg-red-500/30 border-l-4 border-red-500"
               style={{ left: `${(trimStart / duration) * 100}%` }}
-            />
+            >
+              <div className="absolute -top-1 left-0 bg-red-500 text-white text-xs px-1 rounded">Start</div>
+            </div>
             <div
-              className="absolute top-0 bottom-0 bg-red-500/30 border-r-2 border-red-500"
+              className="absolute top-0 bottom-0 bg-red-500/30 border-r-4 border-red-500"
               style={{ left: `${(trimEnd / duration) * 100}%` }}
-            />
+            >
+              <div className="absolute -top-1 right-0 bg-red-500 text-white text-xs px-1 rounded">End</div>
+            </div>
 
-            {/* Cut markers */}
             {cuts.map((cut, index) => (
               <div
                 key={index}
-                className="absolute top-0 bottom-0 w-0.5 bg-yellow-400 cursor-pointer"
-                style={{ left: `${(cut / duration) * 100}%` }}
+                className="absolute top-0 bottom-0 bg-black/60 border-x-2 border-yellow-400 cursor-pointer hover:bg-black/80"
+                style={{
+                  left: `${(cut.start / duration) * 100}%`,
+                  width: `${((cut.end - cut.start) / duration) * 100}%`,
+                }}
                 onClick={(e) => {
                   e.stopPropagation()
-                  removeCut(cut)
+                  removeCut(index)
                 }}
-              />
+                title="Click to remove cut"
+              >
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-yellow-400 text-xs">
+                  <Scissors className="h-4 w-4" />
+                </div>
+              </div>
             ))}
 
             {/* Text overlay markers */}
             {textOverlays.map((overlay) => (
               <div
                 key={overlay.id}
-                className="absolute top-0 bottom-0 bg-green-400/30 border border-green-400"
+                className="absolute top-0 h-2 bg-green-400 rounded"
                 style={{
                   left: `${(overlay.startTime / duration) * 100}%`,
                   width: `${((overlay.endTime - overlay.startTime) / duration) * 100}%`,
                 }}
+                title={overlay.text}
               />
             ))}
 
             {/* Playhead */}
             <div
-              className="absolute top-0 bottom-0 w-0.5 bg-white shadow-lg"
+              className="absolute top-0 bottom-0 w-1 bg-white shadow-lg z-10"
               style={{ left: `${(currentTime / duration) * 100}%` }}
-            />
+            >
+              <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-white rounded-full" />
+            </div>
           </div>
         </div>
 
@@ -495,28 +506,51 @@ export function VideoTimelineEditor({ video, onSave, onExport }: VideoTimelineEd
               {/* Trim Controls */}
               <Card className="bg-gray-700 border-gray-600">
                 <CardContent className="p-3">
-                  <h4 className="text-white text-sm font-medium mb-2">Trim</h4>
+                  <h4 className="text-white text-sm font-medium mb-2">Trim Start</h4>
                   <div className="space-y-2">
-                    <div>
-                      <label className="text-xs text-gray-300">Start: {formatTime(trimStart)}</label>
-                      <Slider
-                        value={[trimStart]}
-                        onValueChange={(value) => setTrimStart(value[0])}
-                        max={duration}
-                        step={0.1}
-                        className="mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-300">End: {formatTime(trimEnd)}</label>
-                      <Slider
-                        value={[trimEnd]}
-                        onValueChange={(value) => setTrimEnd(value[0])}
-                        max={duration}
-                        step={0.1}
-                        className="mt-1"
-                      />
-                    </div>
+                    <div className="text-cyan-400 text-lg font-mono">{formatTime(trimStart)}</div>
+                    <Slider
+                      value={[trimStart]}
+                      onValueChange={(value) => {
+                        setTrimStart(value[0])
+                        if (currentTime < value[0]) seekTo(value[0])
+                      }}
+                      max={trimEnd - 0.1}
+                      step={0.1}
+                      className="mt-1"
+                    />
+                    <Button
+                      onClick={() => setTrimStart(currentTime)}
+                      className="w-full bg-cyan-500 hover:bg-cyan-600 text-xs"
+                    >
+                      Set to Current Time
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gray-700 border-gray-600">
+                <CardContent className="p-3">
+                  <h4 className="text-white text-sm font-medium mb-2">Trim End</h4>
+                  <div className="space-y-2">
+                    <div className="text-cyan-400 text-lg font-mono">{formatTime(trimEnd)}</div>
+                    <Slider
+                      value={[trimEnd]}
+                      onValueChange={(value) => {
+                        setTrimEnd(value[0])
+                        if (currentTime > value[0]) seekTo(value[0])
+                      }}
+                      min={trimStart + 0.1}
+                      max={duration}
+                      step={0.1}
+                      className="mt-1"
+                    />
+                    <Button
+                      onClick={() => setTrimEnd(currentTime)}
+                      className="w-full bg-cyan-500 hover:bg-cyan-600 text-xs"
+                    >
+                      Set to Current Time
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -525,10 +559,14 @@ export function VideoTimelineEditor({ video, onSave, onExport }: VideoTimelineEd
               <Card className="bg-gray-700 border-gray-600">
                 <CardContent className="p-3">
                   <h4 className="text-white text-sm font-medium mb-2">Cuts ({cuts.length})</h4>
-                  <Button onClick={addCut} className="w-full bg-yellow-500 hover:bg-yellow-600 text-black text-sm">
+                  <p className="text-xs text-gray-400 mb-2">Remove segments from video</p>
+                  <Button onClick={addCut} className="w-full bg-yellow-500 hover:bg-yellow-600 text-black text-sm mb-2">
                     <Scissors className="h-3 w-3 mr-1" />
-                    Add Cut
+                    Cut Here
                   </Button>
+                  <div className="text-xs text-gray-400">
+                    {cuts.length > 0 ? "Click cuts on timeline to remove" : "No cuts yet"}
+                  </div>
                 </CardContent>
               </Card>
 
@@ -537,14 +575,10 @@ export function VideoTimelineEditor({ video, onSave, onExport }: VideoTimelineEd
                 <CardContent className="p-3">
                   <h4 className="text-white text-sm font-medium mb-2">Volume: {volume[0]}%</h4>
                   <Slider value={volume} onValueChange={handleVolumeChange} max={100} step={1} />
-                </CardContent>
-              </Card>
-
-              {/* Speed Control */}
-              <Card className="bg-gray-700 border-gray-600">
-                <CardContent className="p-3">
-                  <h4 className="text-white text-sm font-medium mb-2">Speed: {playbackSpeed[0]}x</h4>
-                  <Slider value={playbackSpeed} onValueChange={handleSpeedChange} min={0.25} max={2} step={0.25} />
+                  <div className="mt-2">
+                    <h4 className="text-white text-sm font-medium mb-2">Speed: {playbackSpeed[0]}x</h4>
+                    <Slider value={playbackSpeed} onValueChange={handleSpeedChange} min={0.25} max={2} step={0.25} />
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -569,6 +603,10 @@ export function VideoTimelineEditor({ video, onSave, onExport }: VideoTimelineEd
                       <label className="text-xs text-gray-300">Saturation: {saturation[0]}%</label>
                       <Slider value={saturation} onValueChange={setSaturation} min={0} max={200} step={1} />
                     </div>
+                    <div>
+                      <label className="text-xs text-gray-300">Blur: {blur[0]}px</label>
+                      <Slider value={blur} onValueChange={setBlur} min={0} max={20} step={0.5} />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -588,17 +626,13 @@ export function VideoTimelineEditor({ video, onSave, onExport }: VideoTimelineEd
                       </Button>
                     ))}
                   </div>
-                  <div className="mt-3">
-                    <label className="text-xs text-gray-300">Blur: {blur[0]}px</label>
-                    <Slider value={blur} onValueChange={setBlur} min={0} max={10} step={0.1} />
-                  </div>
                 </CardContent>
               </Card>
 
-              {/* Effects Preview */}
+              {/* Quick Actions */}
               <Card className="bg-gray-700 border-gray-600">
                 <CardContent className="p-3">
-                  <h4 className="text-white text-sm font-medium mb-3">Quick Effects</h4>
+                  <h4 className="text-white text-sm font-medium mb-3">Quick Actions</h4>
                   <div className="space-y-2">
                     <Button
                       onClick={() => {
@@ -609,7 +643,7 @@ export function VideoTimelineEditor({ video, onSave, onExport }: VideoTimelineEd
                       className="w-full bg-purple-500 hover:bg-purple-600 text-xs"
                     >
                       <Zap className="h-3 w-3 mr-1" />
-                      Enhance
+                      Auto Enhance
                     </Button>
                     <Button
                       onClick={() => {
@@ -621,7 +655,7 @@ export function VideoTimelineEditor({ video, onSave, onExport }: VideoTimelineEd
                       }}
                       className="w-full bg-gray-600 hover:bg-gray-500 text-xs"
                     >
-                      Reset All
+                      Reset Effects
                     </Button>
                   </div>
                 </CardContent>
@@ -630,151 +664,134 @@ export function VideoTimelineEditor({ video, onSave, onExport }: VideoTimelineEd
           </TabsContent>
 
           <TabsContent value="text" className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Add Text Overlay */}
-              <Card className="bg-gray-700 border-gray-600">
-                <CardContent className="p-3">
-                  <h4 className="text-white text-sm font-medium mb-3">Add Text Overlay</h4>
-                  <Button onClick={addTextOverlay} className="w-full bg-green-500 hover:bg-green-600 text-white">
-                    <Type className="h-4 w-4 mr-2" />
-                    Add Text at {formatTime(currentTime)}
+            <Card className="bg-gray-700 border-gray-600">
+              <CardContent className="p-3">
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="text-white text-sm font-medium">Text Overlays ({textOverlays.length})</h4>
+                  <Button onClick={addTextOverlay} className="bg-green-500 hover:bg-green-600 text-white text-xs">
+                    <Type className="h-3 w-3 mr-1" />
+                    Add Text
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
 
-              {/* Text Overlays List */}
-              <Card className="bg-gray-700 border-gray-600">
-                <CardContent className="p-3">
-                  <h4 className="text-white text-sm font-medium mb-3">Text Overlays ({textOverlays.length})</h4>
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                {textOverlays.length === 0 ? (
+                  <p className="text-gray-400 text-sm text-center py-4">
+                    No text overlays yet. Click "Add Text" to create one.
+                  </p>
+                ) : (
+                  <div className="space-y-4">
                     {textOverlays.map((overlay) => (
-                      <div key={overlay.id} className="bg-gray-600 p-2 rounded text-xs">
-                        <div className="flex justify-between items-center">
-                          <span className="text-white truncate">{overlay.text}</span>
+                      <div key={overlay.id} className="bg-gray-600 p-3 rounded space-y-3">
+                        <div className="flex justify-between items-start">
+                          <Input
+                            value={overlay.text}
+                            onChange={(e) => updateTextOverlay(overlay.id, { text: e.target.value })}
+                            className="bg-gray-700 text-white flex-1 mr-2"
+                            placeholder="Enter text..."
+                          />
                           <Button
                             onClick={() => removeTextOverlay(overlay.id)}
-                            className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 text-xs"
+                            className="bg-red-500 hover:bg-red-600 text-white px-2"
                           >
                             ×
                           </Button>
                         </div>
-                        <div className="text-gray-300 text-xs">
-                          {formatTime(overlay.startTime)} - {formatTime(overlay.endTime)}
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-xs text-gray-300">Color</label>
+                            <Input
+                              type="color"
+                              value={overlay.color}
+                              onChange={(e) => updateTextOverlay(overlay.id, { color: e.target.value })}
+                              className="bg-gray-700 h-8 w-full"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-300">Size: {overlay.size}px</label>
+                            <Slider
+                              value={[overlay.size]}
+                              onValueChange={(value) => updateTextOverlay(overlay.id, { size: value[0] })}
+                              min={16}
+                              max={96}
+                              step={2}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-xs text-gray-300">X Position: {overlay.x}%</label>
+                            <Slider
+                              value={[overlay.x]}
+                              onValueChange={(value) => updateTextOverlay(overlay.id, { x: value[0] })}
+                              min={0}
+                              max={100}
+                              step={1}
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-300">Y Position: {overlay.y}%</label>
+                            <Slider
+                              value={[overlay.y]}
+                              onValueChange={(value) => updateTextOverlay(overlay.id, { y: value[0] })}
+                              min={0}
+                              max={100}
+                              step={1}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-xs text-gray-300">Start: {formatTime(overlay.startTime)}</label>
+                            <Slider
+                              value={[overlay.startTime]}
+                              onValueChange={(value) => updateTextOverlay(overlay.id, { startTime: value[0] })}
+                              max={overlay.endTime - 0.1}
+                              step={0.1}
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-300">End: {formatTime(overlay.endTime)}</label>
+                            <Slider
+                              value={[overlay.endTime]}
+                              onValueChange={(value) => updateTextOverlay(overlay.id, { endTime: value[0] })}
+                              min={overlay.startTime + 0.1}
+                              max={duration}
+                              step={0.1}
+                            />
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Text Overlay Editor */}
-            {textOverlays.length > 0 && (
-              <Card className="bg-gray-700 border-gray-600">
-                <CardContent className="p-3">
-                  <h4 className="text-white text-sm font-medium mb-3">Edit Selected Text</h4>
-                  {textOverlays.map((overlay) => (
-                    <div key={overlay.id} className="space-y-3 border-b border-gray-600 pb-3 mb-3 last:border-b-0">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-xs text-gray-300">Text</label>
-                          <Input
-                            value={overlay.text}
-                            onChange={(e) => updateTextOverlay(overlay.id, { text: e.target.value })}
-                            className="bg-gray-600 text-white text-xs"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-300">Color</label>
-                          <Input
-                            type="color"
-                            value={overlay.color}
-                            onChange={(e) => updateTextOverlay(overlay.id, { color: e.target.value })}
-                            className="bg-gray-600 h-8"
-                          />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-3">
-                        <div>
-                          <label className="text-xs text-gray-300">Size: {overlay.size}px</label>
-                          <Slider
-                            value={[overlay.size]}
-                            onValueChange={(value) => updateTextOverlay(overlay.id, { size: value[0] })}
-                            min={12}
-                            max={72}
-                            step={1}
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-300">Start: {formatTime(overlay.startTime)}</label>
-                          <Slider
-                            value={[overlay.startTime]}
-                            onValueChange={(value) => updateTextOverlay(overlay.id, { startTime: value[0] })}
-                            max={duration}
-                            step={0.1}
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-300">End: {formatTime(overlay.endTime)}</label>
-                          <Slider
-                            value={[overlay.endTime]}
-                            onValueChange={(value) => updateTextOverlay(overlay.id, { endTime: value[0] })}
-                            max={duration}
-                            step={0.1}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="audio" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Audio Gain */}
-              <Card className="bg-gray-700 border-gray-600">
-                <CardContent className="p-3">
-                  <h4 className="text-white text-sm font-medium mb-2">Audio Gain: {audioGain[0]}dB</h4>
-                  <Slider value={audioGain} onValueChange={setAudioGain} min={-20} max={20} step={1} />
-                </CardContent>
-              </Card>
-
-              {/* Fade In */}
-              <Card className="bg-gray-700 border-gray-600">
-                <CardContent className="p-3">
-                  <h4 className="text-white text-sm font-medium mb-2">Fade In: {formatTime(fadeIn[0])}</h4>
-                  <Slider value={fadeIn} onValueChange={setFadeIn} min={0} max={duration / 4} step={0.1} />
-                </CardContent>
-              </Card>
-
-              {/* Fade Out */}
-              <Card className="bg-gray-700 border-gray-600">
-                <CardContent className="p-3">
-                  <h4 className="text-white text-sm font-medium mb-2">Fade Out: {formatTime(fadeOut[0])}</h4>
-                  <Slider
-                    value={fadeOut}
-                    onValueChange={setFadeOut}
-                    min={(duration * 3) / 4}
-                    max={duration}
-                    step={0.1}
-                  />
-                </CardContent>
-              </Card>
-            </div>
+            <Card className="bg-gray-700 border-gray-600">
+              <CardContent className="p-3">
+                <h4 className="text-white text-sm font-medium mb-3">Audio Controls</h4>
+                <p className="text-gray-400 text-sm">
+                  Volume and playback speed controls are available in the Basic tab.
+                </p>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
 
         {/* Action Buttons */}
         <div className="flex justify-center gap-4">
-          <Button onClick={handleSave} className="bg-green-500 hover:bg-green-600 text-white">
+          <Button onClick={handleSave} className="bg-green-500 hover:bg-green-600 text-white px-6">
             <Save className="h-4 w-4 mr-2" />
             Save Project
           </Button>
           <Button
             onClick={handleExport}
-            className="bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 text-white"
+            className="bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 text-white px-6"
           >
             <Download className="h-4 w-4 mr-2" />
             Export Video

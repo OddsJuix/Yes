@@ -55,14 +55,37 @@ export default function LoginPage() {
     setIsDiscordLoading(true)
     setError(null)
 
-    console.log("Starting Discord login")
+    console.log("[v0] Starting Discord login")
 
     try {
       const supabase = createClient()
-      console.log("Supabase client created for Discord")
+      console.log("[v0] Supabase client created for Discord")
 
-      const redirectUrl = process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback`
-      console.log("Discord redirect URL:", redirectUrl)
+      // In production, use the actual deployed URL, not localhost
+      const getRedirectUrl = () => {
+        // If we have a Vercel URL, use it
+        if (typeof window !== "undefined") {
+          const hostname = window.location.hostname
+
+          // Check if we're on a Vercel deployment
+          if (hostname.includes("vercel.app") || hostname.includes("coconutz.com")) {
+            return `${window.location.origin}/auth/callback`
+          }
+
+          // For local development, use the dev redirect URL
+          if (hostname === "localhost" || hostname === "127.0.0.1") {
+            return process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback`
+          }
+
+          // Default to current origin
+          return `${window.location.origin}/auth/callback`
+        }
+
+        return "/auth/callback"
+      }
+
+      const redirectUrl = getRedirectUrl()
+      console.log("[v0] Discord redirect URL:", redirectUrl)
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "discord",
@@ -71,11 +94,11 @@ export default function LoginPage() {
         },
       })
 
-      console.log("Discord OAuth response:", { data, error })
+      console.log("[v0] Discord OAuth response:", { data, error })
 
       if (error) throw error
     } catch (error: unknown) {
-      console.error("Discord login error:", error)
+      console.error("[v0] Discord login error:", error)
       setError(
         error instanceof Error
           ? error.message
