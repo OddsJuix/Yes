@@ -27,7 +27,7 @@ export default function SignUpPage() {
     setIsLoading(true)
     setError(null)
 
-    console.log("[v0] Starting sign-up process")
+    console.log("Starting sign-up process")
 
     if (password !== repeatPassword) {
       setError("Passwords do not match")
@@ -64,9 +64,9 @@ export default function SignUpPage() {
         })
 
         if (profileError) {
-          console.error("[v0] Profile creation error:", profileError)
+          console.error("Profile creation error:", profileError)
         } else {
-          console.log("[v0] Profile created successfully")
+          console.log("Profile created successfully")
         }
       }
 
