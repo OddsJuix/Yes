@@ -9,34 +9,34 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code")
   const next = searchParams.get("next") ?? "/dashboard"
 
-  console.log("[v0] Auth callback received:", { code: code ? "present" : "missing", origin, next })
+  console.log("Auth callback received:", { code: code ? "present" : "missing", origin, next })
 
   if (code) {
     try {
       const supabase = await createClient()
-      console.log("[v0] Exchanging code for session...")
+      console.log("Exchanging code for session...")
 
       const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
-      console.log("[v0] Exchange result:", {
+      console.log("Exchange result:", {
         success: !error,
         hasUser: !!data?.user,
         error: error?.message,
       })
 
       if (error) {
-        console.error("[v0] Session exchange error:", error)
+        console.error("Session exchange error:", error)
         return NextResponse.redirect(`${origin}/auth/auth-code-error?error=${encodeURIComponent(error.message)}`)
       }
 
       if (data.user) {
-        console.log("[v0] User authenticated:", data.user.id)
+        console.log("User authenticated:", data.user.id)
 
         // Check if user profile exists, create if not
         const { data: existingUser } = await supabase.from("users").select("*").eq("id", data.user.id).single()
 
         if (!existingUser) {
-          console.log("[v0] Creating new user profile...")
+          console.log("Creating new user profile...")
 
           // Create user profile for Discord user
           const username = data.user.user_metadata?.full_name || data.user.user_metadata?.user_name || "Discord User"

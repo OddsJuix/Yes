@@ -25,26 +25,26 @@ export default function LoginPage() {
     setIsLoading(true)
     setError(null)
 
-    console.log("[v0] Starting login process")
+    console.log("Starting login process")
 
     try {
       const supabase = createClient()
-      console.log("[v0] Supabase client created")
+      console.log("Supabase client created")
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      console.log("[v0] Login response:", { data, error })
+      console.log("Login response:", { data, error })
 
       if (error) throw error
 
-      console.log("[v0] Login successful, redirecting to editor")
+      console.log("Login successful, redirecting to editor")
       router.push("/editor")
       router.refresh()
     } catch (error: unknown) {
-      console.error("[v0] Login error:", error)
+      console.error("Login error:", error)
       setError(error instanceof Error ? error.message : "An error occurred during login")
     } finally {
       setIsLoading(false)
@@ -55,14 +55,14 @@ export default function LoginPage() {
     setIsDiscordLoading(true)
     setError(null)
 
-    console.log("[v0] Starting Discord login")
+    console.log("Starting Discord login")
 
     try {
       const supabase = createClient()
-      console.log("[v0] Supabase client created for Discord")
+      console.log("Supabase client created for Discord")
 
       const redirectUrl = process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback`
-      console.log("[v0] Discord redirect URL:", redirectUrl)
+      console.log("Discord redirect URL:", redirectUrl)
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "discord",
@@ -71,11 +71,11 @@ export default function LoginPage() {
         },
       })
 
-      console.log("[v0] Discord OAuth response:", { data, error })
+      console.log("Discord OAuth response:", { data, error })
 
       if (error) throw error
     } catch (error: unknown) {
-      console.error("[v0] Discord login error:", error)
+      console.error("Discord login error:", error)
       setError(
         error instanceof Error
           ? error.message
