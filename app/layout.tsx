@@ -1,13 +1,14 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { GeistSans } from "geist/font/sans"
-import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
 import { CookieConsent } from "@/components/cookie-consent"
 import { NotificationSystem } from "@/components/notification-system"
 import "./globals.css"
 
+export const metadata: Metadata = {
+  title: "Coconutz - Elite Game Development Studio | Roblox, Unity, Scratch Games",
+  description:
 import { Oxanium as V0_Font_Oxanium, Source_Code_Pro as V0_Font_Source_Code_Pro, Source_Serif_4 as V0_Font_Source_Serif_4 } from 'next/font/google'
 
 // Initialize fonts
@@ -16,9 +17,6 @@ const _sourceCodePro = V0_Font_Source_Code_Pro({ subsets: ['latin'], weight: ["2
 const _sourceSerif_4 = V0_Font_Source_Serif_4({ subsets: ['latin'], weight: ["200","300","400","500","600","700","800","900"], variable: '--v0-font-source-serif-4' })
 const _v0_fontVariables = `${_oxanium.variable} ${_sourceCodePro.variable} ${_sourceSerif_4.variable}`
 
-export const metadata: Metadata = {
-  title: "Coconutz - Elite Game Development Studio | Roblox, Unity, Scratch Games",
-  description:
     "Elite Roblox/Scratch/Unity game development studio creating innovative games and having fun. Professional game development services with creative flair.",
   generator: "v0.app",
   keywords: ["game development", "Roblox", "Unity", "Scratch", "game studio", "indie games", "game design"],
@@ -57,7 +55,7 @@ export default function RootLayout({
         <link rel="canonical" href="https://coconutz.studio" />
       </head>
       <body
-        className={`${GeistSans.variable} ${GeistMono.variable} font-sans bg-gradient-to-br from-purple-900 via-gray-900 to-black text-white min-h-screen ${_v0_fontVariables}`}
+        className={`font-sans bg-gradient-to-br from-purple-900 via-gray-900 to-black text-white min-h-screen ${_v0_fontVariables}`}
       >
         <Suspense fallback={null}>{children}</Suspense>
         <CookieConsent />
